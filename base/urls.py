@@ -28,4 +28,13 @@ urlpatterns = [
     path('edicionmedicamentos/<int:id>/', views.edicionmedicamentos, name='edicionmedicamentos'),
     path('eliminarmedicamentos/<int:id>/', views.eliminarmedicamentos, name='eliminarmedicamentos'),
 
+
+    path('tablaecmedicamentos', views.tablaecmedicamentos, name='tablaecmedicamentos'),
+    path('agregarecmedicamentos/', views.agregarecmedicamentos, name='agregarecmedicamentos'),
+    path('registrarecmedicamentos/', views.registrarecmedicamentos, name='registrarecmedicamentos'),
+    path('editarecmedicamentos/<int:id>/', views.editarecmedicamentos, name='editarecmedicamentos'),
+    path('edicionecmedicamentos/<int:id>/', views.edicionecmedicamentos, name='edicionecmedicamentos'),
+    path('eliminarecmedicamentos/<int:id>/', views.eliminarecmedicamentos, name='eliminarecmedicamentos'),
+
+
 ]   
