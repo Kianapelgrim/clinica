@@ -1,11 +1,12 @@
 from django.urls import path
 from . import views
-
+from django.contrib.auth.decorators import login_required
 
 
 urlpatterns = [
+    path('login', views.loginPage , name= "login"),
     path('', views.home , name= "home"),
-    path('login', views.login , name= "login"),
+  
 
     path('tablas', views.tables , name= "tablas"),
     path('agregarsurcursal/', views.agregarsurcursal, name='agregarsurcursal'),
@@ -37,4 +38,27 @@ urlpatterns = [
     path('eliminarecmedicamentos/<int:id>/', views.eliminarecmedicamentos, name='eliminarecmedicamentos'),
 
 
+    path('tablapreciohmedicamento', views.tablapreciohmedicamento, name='tablapreciohmedicamento'),
+    path('agregarpreciohmedicamento/', views.agregarpreciohmedicamento, name='agregarpreciohmedicamento'),
+    path('eliminarpreciohmedicamento/<int:id>/', views.eliminarpreciohmedicamento, name='eliminarpreciohmedicamento'),
+
+
+    path('tablaInventarioMedicamento', views.tablaInventarioMedicamento, name='tablaInventarioMedicamento'),
+
+
+    path('tablalotemedicamento', views.tablalotemedicamento, name='tablalotemedicamento'),
+
+    path('tablacompra', views.tablacompra, name='tablacompra'),
+
+    path('compraMedicamento', views.compraMedicamento, name='compraMedicamento'),
+
+    path('editarcompramedicamento/<int:pk>/', views.editarcompramedicamento, name='editarcompramedicamento'),
+
+    path('tablametodospago', views.tablametodospago, name='tablametodospago'),
+
+    path('agregarmetodospago', views.agregarmetodospago, name='agregarmetodospago'),
+
+    path('tablatipodocumento', views.tablatipodocumento, name='tablatipodocumento'),
+
+    path('agregartipodocumento', views.agregartipodocumento, name='agregartipodocumento'),
 ]   

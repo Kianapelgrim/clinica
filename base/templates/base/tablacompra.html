@@ -1,0 +1,135 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+{% load static %}
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+                    <!-- Page Heading -->
+                    <div class="container">
+                        <div class="row">
+                            <div class="col">
+                            
+                                <!-- Content for the first column -->
+                            </div>
+                            <div class="col">
+                                <h1 class="h3 mb-2 text-gray-800">Lote Medicamentos</h1>
+                                <!-- Content for the second column -->
+                            </div>
+                            <div class="col">
+                                <a href="compraMedicamento" class="btn btn-primary">Agregar</a>
+
+                                <!-- Content for the third column -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+
+                    <!-- DataTales Example -->
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Lote Medicamentos</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Proveedor</th>
+                                            <th>Número de Factura</th>
+                                            <th>Fecha de Pedido</th>
+                                            <th>Fecha de Despacho</th>
+                                            <th>Fecha de Recibido</th>
+                                            <th>Estado de Compra</th>
+                                            <th>Precio Total</th>
+                                         
+                                            
+                                        </tr>
+                                    </thead>
+                                  
+                                    <tbody>
+                                        {% for s in compra%}
+                                        <tr>
+                                            <td>{{s.id}}</td>
+                                            <td>{{s.proveedor.nombre}}</td>
+                                            <td>{{s.numeroFactura}}</td>
+                                            <td>{{s.fechaPedido}}</td>
+                                            <td>{{s.fechaDespacho}}</td>
+                                            <td>{{s.fechaRecibido}}</td>
+                                            <td>{{s.estadoCompra.nombre}}</td>
+                                            <td>{{s.precioTotal}}</td>
+                                            
+                                        
+                                            <td><a href="editarcompramedicamento/{{s.id}}" class="btn btn-info">Editar</a></td>
+                                        </tr>
+                                        {% endfor %}
+                                        
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
+           
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+                    <a class="btn btn-primary" href="login.html">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endblock %}
+    <!-- Bootstrap core JavaScript-->
+    <script src="{%static 'vendor/jquery/jquery.min.js'%}"></script>
+    <script src="{%static 'vendor/bootstrap/js/bootstrap.bundle.min.js'%}"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="{%static 'vendor/jquery-easing/jquery.easing.min.js'%}"></script>
+
+    <!-- Custom scripts for all pages-->
+    <script src="{%static 'js/sb-admin-2.min.js'%}"></script>
+
+    <!-- Page level plugins -->
+    <script src="{%static 'vendor/datatables/jquery.dataTables.min.js'%}"></script>
+    <script src="{%static 'vendor/datatables/dataTables.bootstrap4.min.js'%}"></script>
+
+    <!-- Page level custom scripts -->
+    <script src="{%static 'js/demo/datatables-demo.js'%}"></script>
+
+</body>
+
+</html>

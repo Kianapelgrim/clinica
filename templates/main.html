@@ -25,6 +25,13 @@
 </head>
 
 <body id="page-top">
+    {% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 
     <!-- Page Wrapper -->
     <div id="wrapper">
@@ -64,6 +71,14 @@
                     <span>Pacientes</span></a>
             </li>
 
+   
+
+<!-- Heading -->
+
+
+<!-- Nav Item - Pages Collapse Menu -->
+<!-- Nav Item - Tables 
+
            <!-- Nav Item - Tables -->
            <li class="nav-item">
             <a class="nav-link" href="tables.html">
@@ -75,18 +90,41 @@
 
          
             <!-- Nav Item - Tables -->
-            <li class="nav-item">
-                <a class="nav-link" href="tablamedicamentos">
+         
+
+
+
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPacientes" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <i class="fas fa-fw fa-table"></i>
-                    <span>Medicamentos</span></a>
+                    <span>Medicamentos</span>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdownPacientes">
+                    <!-- Dropdown menu items -->
+                    <a class="dropdown-item" href="tablamedicamentos">Tabla Medicamentos</a>
+                    <a class="dropdown-item" href="tablaInventarioMedicamento">Tabla Inventario Medicamentos</a>
+                    <a class="dropdown-item" href="tablapreciohmedicamento">Tabla Precio Historico Medicamentos</a>
+                    <a class="dropdown-item" href="tablacompra">Tabla Compras de Medicamentos</a>
+                    <a class="dropdown-item" href="tablaecmedicamentos">Tabla Estados de compra de Medicamentos</a>
+                    <a class="dropdown-item" href="tablalotemedicamento">Tabla Lote Medicamentos</a>
+                </div>
             </li>
 
-            <!-- Nav Item - Charts -->
-            <li class="nav-item">
-                <a class="nav-link" href="charts.html">
-                    <i class="fas fa-fw fa-chart-area"></i>
-                    <span>Facturas</span></a>
+
+
+
+
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPacientes" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Facturas</span>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdownPacientes">
+                    <!-- Dropdown menu items -->
+                    <a class="dropdown-item" href="tablametodospago">Tabla Metodos de Pago</a>
+                </div>
             </li>
+
 
             <!-- Nav Item - Tables -->
             <li class="nav-item">
@@ -112,6 +150,12 @@
                 <a class="nav-link" href="tablaProveedores">
                     <i class="fas fa-fw fa-table"></i>
                     <span>Proveedores</span></a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="tablatipodocumento">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Tipos de documento</span></a>
             </li>
             <!-- Divider -->
             <hr class="sidebar-divider d-none d-md-block">
