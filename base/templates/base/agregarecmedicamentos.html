@@ -26,32 +26,69 @@
                     </div>
                     <script>
                         // Get form element
-                        
                         var form = document.getElementById('ecmedicamentosForm');
                     
-                        // Add event listener for form submission
                         form.addEventListener('submit', function(event) {
-                            // Prevent form submission
-                            event.preventDefault();
+                            event.preventDefault(); // Prevent form submission to check nombre uniqueness first
                     
-                            // Validate nombre
                             var nombreInput = document.getElementById('txtNombre');
                             var nombreError = document.getElementById('nombreError');
+                    
+                            // Basic validation first
                             if (!/^[a-zA-Z\s]*$/.test(nombreInput.value)) {
-                            nombreError.textContent = 'Nombre no puede contener números ni caracteres especiales';
-                            return;
+                                nombreError.textContent = 'Nombre no puede contener números ni caracteres especiales';
+                                return;
                             } else if (!/^(?!\s*$).+/.test(nombreInput.value)) {
-                            nombreError.textContent = 'Nombre no puede estar vacío';
-                            return;
+                                nombreError.textContent = 'Nombre no puede estar vacío';
+                                return;
                             } else {
-                            nombreError.textContent = '';
+                                nombreError.textContent = ''; // Clear any previous error message
                             }
                     
-                          
-                            // Submit the form if validation passes
-                            this.submit();
+                            // Check for nombre uniqueness
+                            checkNombreUniqueness(nombreInput.value)
+                                .then(isUnique => {
+                                    if (isUnique) {
+                                        // Nombre is unique; proceed with form submission
+                                        form.submit();
+                                    } else {
+                                        // Nombre is not unique; prevent submission and show error
+                                        nombreError.textContent = 'Nombre debe ser único';
+                                    }
+                                })
+                                .catch(error => {
+                                    nombreError.textContent = 'Nombre debe ser único';
+                                    console.error('Error checking nombre uniqueness:', error);
+                                    // Handle error (possibly show a generic error message)
+                                });
                         });
+                    
+                        function checkNombreUniqueness(nombre) {
+                            return new Promise((resolve, reject) => {
+                                var xhr = new XMLHttpRequest();
+                                xhr.open('GET', '/path/to/your/endpoint?nombre=' + encodeURIComponent(nombre), true);
+                                xhr.onload = function() {
+                                    if (this.status >= 200 && this.status < 300) {
+                                        var response = JSON.parse(xhr.responseText);
+                                        resolve(response.isUnique); // Assuming the endpoint returns a JSON object with an isUnique boolean property
+                                    } else {
+                                        reject({
+                                            status: this.status,
+                                            statusText: xhr.statusText
+                                        });
+                                    }
+                                };
+                                xhr.onerror = function() {
+                                    reject({
+                                        status: this.status,
+                                        statusText: xhr.statusText
+                                    });
+                                };
+                                xhr.send();
+                            });
+                        }
                     </script>
+                    
                     
                    
             <!-- End of Main Content -->

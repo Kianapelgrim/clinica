@@ -63,25 +63,33 @@ DetallePedidoFormSet = forms.inlineformset_factory(
     can_delete=True
 )
 
-class MetodosPagoForm(ModelForm):
+from django import forms
+from django.core.exceptions import ValidationError
+from .models import MetodosPago
+
+class MetodosPagoForm(forms.ModelForm):
     class Meta: 
         model = MetodosPago
         fields = '__all__'
 
     def clean_nombre(self):
-        nombre = self.cleaned_data.get('nombre')
+        nombre = self.cleaned_data.get('nombre').strip()  # Using strip() to remove leading/trailing whitespace
 
         # Check if the nombre is less than 3 characters
         if len(nombre) < 3:
             raise forms.ValidationError("El nombre debe tener al menos 3 caracteres.")
 
-        # Check if the nombre contains only tabs
-        if nombre.isspace():
-            raise forms.ValidationError("El nombre no puede contener solo espacios.")
+        # Check if the nombre contains only spaces (after stripping whitespace)
+        if not nombre:
+            raise forms.ValidationError("El nombre no puede estar vacío.")
 
-        # Check if the nombre contains only numbers
-        if nombre.isdigit():
-            raise forms.ValidationError("El nombre no puede contener solo números.")
+        # Check if the nombre contains only letters
+        if not nombre.isalpha():
+            raise forms.ValidationError("El nombre solo puede contener letras.")
+
+        # Check for uniqueness of nombre
+        if MetodosPago.objects.filter(nombre__iexact=nombre).exists():
+            raise forms.ValidationError("El nombre ya existe. Por favor, elige otro nombre.")
 
         return nombre
     

@@ -39,6 +39,7 @@ class Proveedores(models.Model):
     direccion = models.TextField()
     correoElectronico = models.EmailField(unique=True)
     telefono = models.CharField(max_length=20)
+    personaEncargada= models.CharField(max_length = 255, null = True)
 
     def clean(self):
         super().clean()
@@ -65,7 +66,7 @@ class Medicamentos(models.Model):
 
 class ECMedicamentos(models.Model):
     id = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=255, blank=False)
+    nombre = models.CharField(unique= True, max_length=255, blank=False)
     def __str__(self):
         return self.nombre
     

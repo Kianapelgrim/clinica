@@ -42,8 +42,9 @@
                                     // Validate nombre
                                     var nombreInput = document.getElementById('txtNombre');
                                     var nombreError = document.getElementById('nombreError');
-                                    if (!/^(?!\s*$)\D/.test(nombreInput.value)) {
-                                        nombreError.textContent = 'Nombre no puede estar vacío y no puede contener solo números o espacios';
+                                    if (!/^[a-zA-Z]+$/.test(nombreInput.value.trim())) {
+                                        event.preventDefault();
+                                        nombreError.textContent = 'Nombre solo puede contener letras';
                                         return;
                                     } else {
                                         nombreError.textContent = '';

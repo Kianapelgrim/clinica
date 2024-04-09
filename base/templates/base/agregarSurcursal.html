@@ -22,10 +22,15 @@
                                 </div>
                                 <div class="form-group">
                                     <input type="email" id="txtCorreoElectronico" name="txtCorreoElectronico" class="form-control" placeholder="Correo Electronico" maxlength="50" required>
+                                    <small id="correoElectronicoError" class="text-danger"></small>
                                 </div>
                                 <div class="form-group">
                                     <input type="text" id="txtTelefono" name="txtTelefono" class="form-control" placeholder="Telefono" maxlength="20" required>
                                     <small id="telefonoError" class="text-danger"></small>
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" id="txtPersonaEncargada" name="txtPersonaEncargada" class="form-control" placeholder="Persona Encargada" maxlength="20" required>
+                                    <small id="personaEncargada" class="text-danger"></small>
                                 </div>
                                 <div class="form-group">
                                     <button type="submit" class="btn btn-success btn-block text-white">Guardar</button>
@@ -36,29 +41,71 @@
             
                     <script>
                         document.getElementById('surcursalesForm').addEventListener('submit', function (event) {
+                            var isValid = true; // Asumimos que el formulario es válido inicialmente
+                        
+                            // Validación para nombre
                             var nombreInput = document.getElementById('txtNombre');
                             var nombreError = document.getElementById('nombreError');
-                            var nombreValue = nombreInput.value.trim(); // Trim to remove leading and trailing spaces
-            
-                            if (nombreValue.length === 0) {
-                                nombreError.textContent = 'El nombre es requerido.';
-                                event.preventDefault(); // Prevent form submission
+                            var nombreValue = nombreInput.value.trim();
+                            // Se agrega validación para no permitir números o caracteres especiales al inicio
+                            if (/^[0-9\W]/.test(nombreValue) || nombreValue.length === 0) {
+                                nombreError.textContent = 'El nombre no puede empezar con números o caracteres especiales, ni estar vacío.';
+                                event.preventDefault();
                             } else {
-                                nombreError.textContent = ''; // Clear any previous error message
+                                nombreError.textContent = '';
                             }
-            
+                            var correoElectronicoInput = document.getElementById('txtCorreoElectronico');
+                            var correoElectronicoError = document.getElementById('correoElectronicoError'); // Asegúrate de tener este elemento en tu HTML
+                            var correoElectronicoValue = correoElectronicoInput.value.trim();
+                            // Expresión regular para validar el correo electrónico según los criterios especificados
+                            var correoElectronicoPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,3}$/;
+                            if (!correoElectronicoPattern.test(correoElectronicoValue) || !/^[^\s@]+@[a-zA-Z]{2,}\.[a-zA-Z]{2,3}$/.test(correoElectronicoValue)) {
+                                correoElectronicoError.textContent = 'El correo electrónico debe tener 2 o más letras después del @ y de 2 a 3 letras después del punto.';
+                                isValid = false; // Ajusta el estado de validez
+                                event.preventDefault();
+                            } else {
+                                correoElectronicoError.textContent = ''; // Limpia el mensaje de error si pasa la validación
+                            }
+                                                    // Validación para direccion
+                            var direccionInput = document.getElementById('txtDireccion');
+                            var direccionError = document.getElementById('direccionError'); // Asegúrate de tener este elemento en tu HTML
+                            var direccionValue = direccionInput.value.trim();
+                            // Se agrega validación para no permitir números o caracteres especiales al inicio
+                            if (direccionValue.length < 5 || /^[0-9\W]/.test(direccionValue)) {
+                                direccionError.textContent = 'La dirección no puede tener menos de 5 caracteres, ni empezar con números o caracteres especiales.';
+                                event.preventDefault();
+                            } else {
+                                direccionError.textContent = '';
+                            }
+                        
+                            // Validación para personaEncargada
+                            var personaEncargadaInput = document.getElementById('txtPersonaEncargada');
+                            var personaEncargadaError = document.getElementById('personaEncargadaError'); // Asegúrate de tener este elemento en tu HTML
+                            var personaEncargadaValue = personaEncargadaInput.value.trim();
+                            // Se agrega validación para no permitir números o caracteres especiales al inicio
+                            if (personaEncargadaValue.length < 2 || /^[0-9\W]/.test(personaEncargadaValue)) {
+                                personaEncargadaError.textContent = 'La persona encargada no puede tener menos de 2 caracteres, ni empezar con números o caracteres especiales.';
+                                event.preventDefault();
+                            } else {
+                                personaEncargadaError.textContent = '';
+                            }
+                        
+                            // Validación para teléfono (existente en tu código)
                             var telefonoInput = document.getElementById('txtTelefono');
                             var telefonoError = document.getElementById('telefonoError');
-                            var telefonoPattern = /^\d{8}$/; // Modify the pattern as needed
-            
+                            var telefonoPattern = /^(3|8|9|22)\d{6,7}$/; // Ajuste según necesidad
                             if (!telefonoPattern.test(telefonoInput.value)) {
-                                telefonoError.textContent = 'El número de teléfono debe tener 8 dígitos.';
-                                event.preventDefault(); // Prevent form submission
+                                telefonoError.textContent = 'El número de teléfono debe empezar con 3, 8, 9, o 22 y cumplir con la longitud requerida.';
+                                event.preventDefault();
                             } else {
-                                telefonoError.textContent = ''; // Clear any previous error message
+                                telefonoError.textContent = '';
                             }
+                        
+                            // Si alguna validación falla, previene el envío del formulario
+                            
                         });
-                    </script>
+                        </script>
+                        
             <!-- End of Main Content -->
 
                       

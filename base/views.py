@@ -45,14 +45,14 @@ def registrarSurcursal(request):
     direccion = request.POST['txtDireccion']
     correoElectronico = request.POST['txtCorreoElectronico']
     telefono = request.POST['txtTelefono']
-    personaencargada= request.POST['txtPersonaEncargada']
+    personaEncargada= request.POST['txtPersonaEncargada']
     # Create Surcursales object with form data
     surcursal  = Surcursales.objects.create(
         nombre=nombre,
         direccion=direccion,
         correoElectronico=correoElectronico,
         telefono=telefono,
-        personaencargada=personaencargada
+        personaEncargada=personaEncargada
     )
 
     # Add a success message
@@ -78,12 +78,14 @@ def edicionSurcursal(request, id):
         direccion = request.POST['txtDireccion']
         correoElectronico = request.POST['txtCorreoElectronico']
         telefono = request.POST['txtTelefono']
+        personaEncargada = request.POST['txtPersonaEncargada']
 
         # Update Surcursales object fields
         surcursales.nombre = nombre
         surcursales.direccion = direccion
         surcursales.correoElectronico = correoElectronico
         surcursales.telefono = telefono
+        surcursales.personaEncargada = personaEncargada
         
         # Save the updated object
         surcursales.save()

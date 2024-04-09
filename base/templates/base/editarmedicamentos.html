@@ -15,11 +15,11 @@
             <form id="medicamentosEditarForm" action="/edicionmedicamentos/{{ medicamentos.id }}/" method="POST">
                 {% csrf_token %}
                 <div class="form-group">
-                    <input type="text" id="txtNombre" name="txtNombre" value="{{medicamentos.nombre}}" class="form-control" placeholder="Nombre" required>
+                    <input type="text" id="txtNombre" name="txtNombre" value="{{medicamentos.nombre}}" class="form-control" placeholder="Nombre"minlength="3"  required>
                     <small id="nombreError" class="text-danger"></small>
                 </div>
                 <div class="form-group">
-                    <input type="text" id="txtIngredientes" name="txtIngredientes" value="{{medicamentos.ingredientes}}" class="form-control" placeholder="Ingredientes" required>
+                    <input type="text" id="txtIngredientes" name="txtIngredientes" value="{{medicamentos.ingredientes}}" class="form-control" placeholder="Ingredientes" minlength="3" required>
                     <small id="ingredientesError" class="text-danger"></small>
                 </div>
                 <div class="form-group">
@@ -35,6 +35,56 @@
 
                 </div>
                 <!-- /.container-fluid -->
+                    <script>
+                        // Get form element
+                        var form = document.getElementById('medicamentosEditarForm');
+                    
+                        // Add event listener for form submission
+                        form.addEventListener('submit', function(event) {
+                            // Validate nombre
+                            var nombreInput = document.getElementById('txtNombre');
+                            var nombreError = document.getElementById('nombreError');
+                            if (!/^[a-zA-Z]+$/.test(nombreInput.value.trim())) {
+                                event.preventDefault();
+                                nombreError.textContent = 'Nombre solo puede contener letras';
+                                return;
+                            } else if (/^\s/.test(nombreInput.value.trim())) {
+                                event.preventDefault();
+                                nombreError.textContent = 'Nombre no puede empezar con un espacio';
+                                return;
+                            } else {
+                                nombreError.textContent = '';
+                            }
+                    
+                            // Validate ingredientes
+                            var ingredientesInput = document.getElementById('txtIngredientes');
+                            var ingredientesError = document.getElementById('ingredientesError');
+                            if (/^\d+$/.test(ingredientesInput.value.trim())) {
+                                event.preventDefault();
+                                ingredientesError.textContent = 'Ingredientes no puede ser solo números';
+                                return;
+                            } else {
+                                ingredientesError.textContent = '';
+                            }
+                    
+                            // Validate precio
+                            var precioInput = document.getElementById('txtPrecio');
+                            var precioError = document.getElementById('precioError');
+                            var precio = parseFloat(precioInput.value);
+                            if (isNaN(precio) || precio <= 0 || precio >= 1000000 || !/^\d+(\.\d{1,2})?$/.test(precioInput.value)) {
+                                event.preventDefault();
+                                precioError.textContent = 'Precio debe ser un número mayor que cero, con máximo dos decimales y menor que 1,000,000';
+                                return;
+                            } else {
+                                precioError.textContent = '';
+                            }
+                    
+                            // Submit the form if validation passes
+                            this.submit();
+                        });
+                    </script>
+                
+                
                 
             </div>
             <!-- End of Main Content -->
@@ -73,48 +123,7 @@
             </div>
 
             {% endblock %}
-            <script>
-                // Get form element
-                var form = document.getElementById('medicamentosEditarForm');
             
-                // Add event listener for form submission
-                form.addEventListener('submit', function(event) {
-                    // Prevent form submission
-                    event.preventDefault();
-            
-                    // Validate nombre
-                    var nombreInput = document.getElementById('txtNombre');
-                    var nombreError = document.getElementById('nombreError');
-                    if (!/^(?!\s*$).+/.test(nombreInput.value)) {
-                        nombreError.textContent = 'Nombre no puede estar vacío';
-                        return;
-                    } else {
-                        nombreError.textContent = '';
-                    }
-            
-                    var ingredientesInput = document.getElementById('txtIngredientes');
-                    var ingredientesError = document.getElementById('ingredientesError');
-                    if (!/^(?!\s*$).+/.test(ingredientesInput.value)) {
-                        ingredientesError.textContent = 'Casilla de ingredientes no puede estar vacía';
-                        return;
-                    } else {
-                        ingredientesError.textContent = '';
-                    }
-                    // Validate precio
-                    var precioInput = document.getElementById('txtPrecio');
-                    var precioError = document.getElementById('precioError');
-                    var precio = parseFloat(precioInput.value);
-                    if (isNaN(precio) || precio <= 0 || precio >= 1000000 || !/^\d+(\.\d{1,2})?$/.test(precioInput.value)) {
-                        precioError.textContent = 'Precio debe ser un número mayor que cero, con máximo dos decimales y menor que 1,000,000';
-                        return;
-                    } else {
-                        precioError.textContent = '';
-                    }
-            
-                    // Submit the form if validation passes
-                    this.submit();
-                });
-            </script>
                 
             <!-- Bootstrap core JavaScript-->
             <script src="{%static 'vendor/jquery/jquery.min.js'%}"></script>

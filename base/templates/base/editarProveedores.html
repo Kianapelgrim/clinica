@@ -14,7 +14,7 @@
                 <form action="/edicionProveedores/{{ proveedores.id }}/" id="proveedoresEditarForm" method="POST">{% csrf_token %}
                     <div class="form-group">
                         <input type="text" id="txtNombre" name="txtNombre" value="{{proveedores.nombre}}" class="form-control" placeholder="Nombre"
-                            minlength="6" maxlength="6" required>
+                            minlength="2" required>
                         <small id="nombreError" class="text-danger"></small>
                     </div>
                     <div class="form-group">
@@ -32,6 +32,10 @@
                         <small id="telefonoError" class="text-danger"></small>
                     </div>
                     <div class="form-group">
+                        <input type="text" id="txtPersonaEncargada" name="txtPersonaEncargada" class="form-control" placeholder="Persona Encargada" maxlength="20" required>
+                        <small id="personaEncargadaError" class="text-danger"></small>
+                    </div>
+                    <div class="form-group">
                         <button type="submit" class="btn btn-success btn-block text-white">Guardar</button>
                     </div>
                 </form>
@@ -39,7 +43,63 @@
 
                 </div>
                 <!-- /.container-fluid -->
-
+                    <script>
+                        document.getElementById('proveedoresEditarForm').addEventListener('submit', function (event) {
+                        // Supongamos que el formulario es válido inicialmente
+        
+                            // Validación para nombre
+                            var nombreInput = document.getElementById('txtNombre');
+                            var nombreError = document.getElementById('nombreError');
+                            var nombreValue = nombreInput.value.trim();
+                            if (/^\d+$/.test(nombreValue) || nombreValue.length === 0) {
+                                nombreError.textContent = 'El nombre no puede ser solo números o estar vacío.';
+                                event.preventDefault();
+                            } else {
+                                nombreError.textContent = '';
+                            }
+        
+                            // Validación para direccion
+                            var direccionInput = document.getElementById('txtDireccion');
+                            var direccionValue = direccionInput.value.trim();
+                            if (direccionValue.length < 5 || /^\d+$/.test(direccionValue) || /^\s+$/.test(direccionValue)) {
+                                alert('La dirección no puede tener menos de 5 caracteres, ser solo números o solo espacios.');
+                                event.preventDefault();
+                            }
+                        
+        
+                            console.log("TELEFONITO error")
+                            // Validación para teléfono (existente en tu código)
+                            var telefonoInput = document.getElementById('txtTelefono');
+                            var telefonoError = document.getElementById('telefonoError');
+                            // Asume una longitud fija para el número; ajusta "{8}" al final si necesitas una longitud diferente
+                            // Esto permite números que empiecen con 3, 8, 9, y números que empiecen con 22 seguidos de cualquier combinación de dígitos hasta completar la longitud total definida
+                            var telefonoPattern = /^(3|8|9|22)\d{6,7}$/ ; // Ajusta según la longitud deseada de los números que comienzan con 22
+                            if (!telefonoPattern.test(telefonoInput.value)) {
+                                event.preventDefault();
+                                console.log("Telefono error")
+                                telefonoError.textContent = 'El número de teléfono debe empezar con 3, 8, 9, o 22 y cumplir con la longitud requerida.';
+                                
+                            } else {
+                                telefonoError.textContent = '';
+                                console.log("Telefono no error")
+                            }
+                            console.log("Persona error1")
+                            // Validación para personaEncargada
+                            var personaEncargadaInput = document.getElementById('txtPersonaEncargada');
+                            var personaEncargadaError = document.getElementById('personaEncargadaError');
+                            var personaEncargadaValue = personaEncargadaInput.value.trim();
+                            if (personaEncargadaValue.length < 2 || /^\d+$/.test(personaEncargadaValue) || /^\s+$/.test(personaEncargadaValue)) {
+                                event.preventDefault();
+                                console.log("Persona error")
+                                personaEncargadaError.textContent = 'La persona encargada no puede tener menos de 2 caracteres, ser solo números o solo espacios.';
+                                
+                            } else {
+                                personaEncargadaError.textContent = '';
+                            }
+                            
+                            
+                        });
+                    </script>
             </div>
             <!-- End of Main Content -->
 
@@ -93,42 +153,7 @@
             <!-- Page level custom scripts -->
             <script src="{%static 'js/demo/chart-area-demo.js'%}"></script>
             <script src="{%static 'js/demo/chart-pie-demo.js'%}"></script>
-            <script>
-                document.getElementById('proveedoresEditarForm').addEventListener('submit', function (event) {
-                    var nombreInput = document.getElementById('txtNombre');
-                    var nombreError = document.getElementById('nombreError');
-                    var nombreValue = nombreInput.value.trim(); // Trim to remove leading and trailing spaces
-            
-                    if (nombreValue.length === 0) {
-                        nombreError.textContent = 'El nombre es requerido.';
-                        event.preventDefault(); // Prevent form submission
-                    } else {
-                        nombreError.textContent = ''; // Clear any previous error message
-                    }
-            
-                    var telefonoInput = document.getElementById('txtTelefono');
-                    var telefonoError = document.getElementById('telefonoError');
-                    var telefonoPattern = /^\d{8}$/; // Modify the pattern as needed
-            
-                    if (!telefonoPattern.test(telefonoInput.value)) {
-                        telefonoError.textContent = 'El número de teléfono debe tener 8 dígitos.';
-                        event.preventDefault(); // Prevent form submission
-                    } else {
-                        telefonoError.textContent = ''; // Clear any previous error message
-                    }
-            
-                    var emailInput = document.getElementById('txtCorreoElectronico');
-                    var emailError = document.getElementById('emailError');
-                    var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Email pattern
-            
-                    if (!emailPattern.test(emailInput.value)) {
-                        emailError.textContent = 'El correo electrónico debe tener un formato válido.';
-                        event.preventDefault(); // Prevent form submission
-                    } else {
-                        emailError.textContent = ''; // Clear any previous error message
-                    }
-                });
-            </script>
+           
         
         </body>
         

@@ -32,7 +32,7 @@
                     <!-- DataTales Example -->
                     <div class="card shadow mb-4">
                         <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">DataTables Example</h6>
+                            <h6 class="m-0 font-weight-bold text-primary">Surcursales</h6>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -44,17 +44,9 @@
                                             <th>Direccion</th>
                                             <th>Correo Elctrónico</th>
                                             <th>Telefono</th>
+                                            <th>Persona Encargada</th>
                                         </tr>
                                     </thead>
-                                    <tfoot>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Nombre</th>
-                                            <th>Direccion</th>
-                                            <th>Correo Elctrónico</th>
-                                            <th>Telefono</th>
-                                        </tr>
-                                    </tfoot>
                                     <tbody>
                                         {% for s in surcursales %}
                                         <tr>
@@ -63,6 +55,7 @@
                                             <td>{{s.direccion}}</td>
                                             <td>{{s.correoElectronico}}</td>
                                             <td>{{s.telefono}}</td>
+                                            <td>{{s.personaEncargada}}</td>
                                             <td><a href="editarSurcursal/{{s.id}}" class="btn btn-info">Editar</a></td>
                                             <td><a href="eliminarSurcursal/{{s.id}}" class="btn btn-danger btnEliminacion">Eliminar</a></td>
                                         </tr>
