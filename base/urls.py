@@ -24,9 +24,8 @@ urlpatterns = [
 
     path('tablamedicamentos', views.tablamedicamentos, name='tablamedicamentos'),
     path('agregarmedicamentos/', views.agregarmedicamentos, name='agregarmedicamentos'),
-    path('registrarmedicamentos/', views.registrarmedicamentos, name='registrarmedicamentos'),
-    path('editarmedicamentos/<int:id>/', views.editarmedicamentos, name='editarmedicamentos'),
-    path('edicionmedicamentos/<int:id>/', views.edicionmedicamentos, name='edicionmedicamentos'),
+    path('editarmedicamento/<int:medicamento_id>/', views.editarmedicamento, name='editarmedicamento'),
+    path('editarpreciomedicamento/<int:pk>/', views.editarpreciomedicamento, name='editarpreciomedicamento'),
     path('eliminarmedicamentos/<int:id>/', views.eliminarmedicamentos, name='eliminarmedicamentos'),
 
 
@@ -39,8 +38,6 @@ urlpatterns = [
 
 
     path('tablapreciohmedicamento', views.tablapreciohmedicamento, name='tablapreciohmedicamento'),
-    path('agregarpreciohmedicamento/', views.agregarpreciohmedicamento, name='agregarpreciohmedicamento'),
-    path('eliminarpreciohmedicamento/<int:id>/', views.eliminarpreciohmedicamento, name='eliminarpreciohmedicamento'),
 
 
     path('tablaInventarioMedicamento', views.tablaInventarioMedicamento, name='tablaInventarioMedicamento'),
@@ -52,7 +49,7 @@ urlpatterns = [
 
     path('compraMedicamento', views.compraMedicamento, name='compraMedicamento'),
 
-    path('editarcompramedicamento/<int:pk>/', views.editarcompramedicamento, name='editarcompramedicamento'),
+    path('editarcompramedicamento/<int:compra_id>/', views.editarcompramedicamento, name='editarcompramedicamento'),
 
     path('tablametodospago', views.tablametodospago, name='tablametodospago'),
 
@@ -61,4 +58,68 @@ urlpatterns = [
     path('tablatipodocumento', views.tablatipodocumento, name='tablatipodocumento'),
 
     path('agregartipodocumento', views.agregartipodocumento, name='agregartipodocumento'),
+
+    path('tablacargos', views.tablacargos, name='tablacargos'),
+
+    path('agregarcargo/', views.agregarcargo, name='agregarcargo'),
+
+    path('tabladocumento', views.tabladocumento, name='tabladocumento'),
+
+    path('tablaempleados', views.tablaempleados, name='tablaempleados'),
+
+    path('agregarempleados/', views.agregarempleados, name='agregarempleados'),
+
+    path('editarempleados/<int:pk>/', views.editarempleados, name='editarempleados'),
+
+    path('tablatiposalas/', views.tablatiposalas, name='tablatiposalas'),
+
+    path('tablasalas/', views.tablasalas, name='tablasalas'),
+
+    path('agregartiposala/', views.agregartiposala, name='agregartiposala'),
+
+    path('agregarsala/', views.agregarsala, name='tagregarsala'),
+
+    path('editartiposala/<int:pk>/', views.editartiposala, name='editartiposala'),
+
+    path('editarsala/<int:pk>/', views.editarsala, name='editarsala'),
+
+    path('tablapacientes', views.tablapacientes, name='tablapacientes'),
+
+    path('agregarpaciente/', views.agregarpaciente, name='agregarpaciente'),
+
+    path('editarpaciente/<int:pk>/', views.editarpaciente, name='editarpaciente'),
+
+    path('tablacitas', views.tablacitas, name='tablacitas'),
+
+    path('agregarcita/', views.agregarcita, name='agregarcita'),
+
+    path('editarcita/<int:pk>/', views.editarcita, name='editarcita'),
+
+    path('tablaprescripciones', views.tablaprescripciones, name='tablaprescripciones'),
+
+    path('agregarprescripcion/', views.agregarprescripcion, name='agregarprescripcion'),
+   
+    path('tablaordenesmedicas', views.tablaordenesmedicas, name='tablaordenesmedicas'),
+
+    path('agregarordenmedica/', views.agregarordenmedica, name='agregarordenmedica'),
+
+    path('editarordenmedica/<int:pk>/', views.editarordenmedica, name='editarordenmedica'),
+
+    path('tablahistorialclinico', views.tablahistorialclinico, name='tablahistorialclinico'),
+
+    path('tablacitapaciente/<int:pk>/', views.tablacitapaciente, name='tablacitapaciente'),
+
+    path('tablaprescripcionespaciente/<int:pk>/', views.tablaprescripcionespaciente, name='tablaprescripcionespaciente'),
+
+    path('tablaordenesmedicaspaciente/<int:pk>/', views.tablaordenesmedicaspaciente, name='tablaordenesmedicaspaciente'),
+
+    path('tablaquejas/', views.tablaquejas, name='tablaquejas'),
+
+    path('agregarqueja/', views.agregarqueja, name='agregarqueja'),
+
+    path('tablaparametros/', views.tablaparametros, name='tablaparametros'),
+
+    path('agregarparametros/', views.agregarparametros, name='agregarparametros'),
+
+    path('editarparametros/<int:pk>/', views.editarparametros, name='editarparametros'),
 ]   

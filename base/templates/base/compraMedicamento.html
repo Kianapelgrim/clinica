@@ -22,39 +22,24 @@
                         </div>
                     </div>
                     
-                    <form method="POST">
+                    <form method="post">
                         {% csrf_token %}
-                        {{ form.as_p }}
-                        <div id="detallecompra-formset">
-                            {{ formset.management_form }}
-                            {% for form in formset %}
-                                <div class="detallecompra-form">
-                                    {{ form.as_p }}
-                                </div>
+                        <div>
+                            <h3>Información de la Compra</h3>
+                            {{ compra_form.as_p }}
+                        </div>
+                        <div>
+                            <h3>Detalles del Pedido</h3>
+                            {{ detalle_formset.management_form }}
+                            {% for form in detalle_formset %}
+                                {{ form.as_p }}
+                                <h4>Lote de Medicamento</h4>
+                                {{ lote_form.as_p }}
                             {% endfor %}
                         </div>
-                        <button type="button" id="add-form">Add another</button>
-                        <button type="submit">Submit</button>
+                        <button type="submit" style="max-width: 300px;" class="btn btn-success btn-block text-white">Agregar</button>
+                        <button type="submit" style="max-width: 300px;" class="btn btn-success btn-block text-white">Guardar</button>
                     </form>
-                    
-                    <script>
-                    document.getElementById('add-form').addEventListener('click', function() {
-                        var formIndex = $('#detallecompra-formset').children().length - 1;
-                        var newElement = $('#detallecompra-formset .detallecompra-form:last').clone(true);
-                        newElement.find(':input').each(function() {
-                            var name = $(this).attr('name').replace('-' + (formIndex-1) + '-', '-' + formIndex + '-');
-                            var id = 'id_' + name;
-                            $(this).attr({'name': name, 'id': id}).val('').removeAttr('checked');
-                        });
-                        newElement.find('label').each(function() {
-                            var newFor = $(this).attr('for').replace('-' + (formIndex-1) + '-', '-' + formIndex + '-');
-                            $(this).attr('for', newFor);
-                        });
-                        $('#detallecompra-formset').append(newElement);
-                        $('#id_form-TOTAL_FORMS').val(parseInt($('#id_form-TOTAL_FORMS').val()) + 1);
-                    });
-                    </script>
-                    
 
 
                     <!-- Include the necessary JavaScript libraries -->
@@ -71,6 +56,7 @@
         
             </div>
             <!-- End of Page Wrapper -->
+            
         
             <!-- Scroll to Top Button-->
             <a class="scroll-to-top rounded" href="#page-top">
@@ -109,6 +95,7 @@
         
             <!-- Page level plugins -->
             <script src="{%static 'vendor/chart.js/Chart.min.js'%}"></script>
+            
         
             <!-- Page level custom scripts -->
             <script src="{%static 'js/demo/chart-area-demo.js'%}"></script>

@@ -4,82 +4,38 @@
 
 {% load static %}
 
+
                 <!-- Begin Page Content -->
                 <div class="container-fluid">
-
+                    <div class="container">
+                        <div class="row">
+                            <div class="col">
+                            
+                                <!-- Content for the first column -->
+                            </div>
+                            <div class="col">
+                                <h1 class="h3 mb-2 text-gray-800">Agregar Medicamento</h1>
+                                <!-- Content for the second column -->
+                            </div>
                     <!-- Page Heading -->
-                    <h2>Gestión de Medicamentos</h2>
-                    <div class="card">
-                        <div class="card-body">
-                            <form action="/registrarmedicamentos/" method="POST" id="medicamentosForm">
-                                {% csrf_token %}
-                                <div class="form-group">
-                                    <input type="text" id="txtNombre" name="txtNombre" class="form-control" placeholder="Nombre" minlength="2" maxlength="50" required>
-                                    <small id="nombreError" class="text-danger"></small>
-                                </div>
-                                <div class="form-group">
-                                    <input type="text" id="txtIngredientes" name="txtIngredientes" class="form-control" placeholder="Ingredientes" minlength="2" maxlength="50" required>
-                                    <small id="ingredientesError" class="text-danger"></small>
-                                </div>
-                                <div class="form-group">
-                                    <input type="number" id="txtPrecio" name="txtPrecio" class="form-control" placeholder="Precio" min="0.01" step="0.01" required>
-                                    <small id="precioError" class="text-danger"></small>
-                                </div>                                
-                               
-                                <div class="form-group">
-                                    <button type="submit" class="btn btn-success btn-block text-white">Guardar</button>
-                                </div>
-                            </form>
-                            <script>
-                                // Get form element
-                                var form = document.getElementById('medicamentosForm');
-                            
-                                // Add event listener for form submission
-                                form.addEventListener('submit', function(event) {
-                                    // Prevent form submission
-                                    event.preventDefault();
-                            
-                                    // Validate nombre
-                                    var nombreInput = document.getElementById('txtNombre');
-                                    var nombreError = document.getElementById('nombreError');
-                                    if (!/^[a-zA-Z]+$/.test(nombreInput.value.trim())) {
-                                        event.preventDefault();
-                                        nombreError.textContent = 'Nombre solo puede contener letras';
-                                        return;
-                                    } else {
-                                        nombreError.textContent = '';
-                                    }
-                                    
-                            
-                                    // Validate ingredientes
-                                    var ingredientesInput = document.getElementById('txtIngredientes');
-                                    var ingredientesError = document.getElementById('ingredientesError');
-                                    if (!/^(?!\s*$)\D/.test(ingredientesInput.value)) {
-                                        ingredientesError.textContent = 'Casilla de ingredientes no puede estar vacía y no puede contener solo números o espacios';
-                                        return;
-                                    } else {
-                                        ingredientesError.textContent = '';
-                                    }
-                            
-                                    // Validate precio
-                                    var precioInput = document.getElementById('txtPrecio');
-                                    var precioError = document.getElementById('precioError');
-                                    var precio = parseFloat(precioInput.value);
-                                    if (isNaN(precio) || precio <= 0 || precio >= 1000000 || !/^\d+(\.\d{1,2})?$/.test(precioInput.value)) {
-                                        precioError.textContent = 'Precio debe ser un número mayor que cero, con máximo dos decimales y menor que 1,000,000';
-                                        return;
-                                    } else {
-                                        precioError.textContent = '';
-                                    }
-                            
-                                    // Submit the form if validation passes
-                                    this.submit();
-                                });
-                            </script>
-                            
+                            </div>
                         </div>
                     </div>
-                   
+                    
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ medicamentos_form.as_p }}
+                        {{ preciohmedicamentos_form.as_p }}
+                        <button type="submit" style="max-width: 300px;" class="btn btn-success btn-block text-white">Guardar</button>
+                    </form>
+                    
+                    
+
+
+                    <!-- Include the necessary JavaScript libraries -->
+                    
+                    
                     
                    
             <!-- End of Main Content -->

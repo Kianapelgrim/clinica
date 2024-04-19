@@ -40,9 +40,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Medicamento</th>
-                                            <th>Surcursal</th>
                                             <th>Fecha Inicial</th>
-                                            <th>Fecha Final</th>
                                             <th>Precio</th>
                                         </tr>
                                     </thead>
@@ -51,13 +49,10 @@
                                         {% for s in preciohmedicamento %}
                                         <tr>
                                             <td>{{ s.id }}</td>
-                                            <td>{{ s.medicamento.nombre }}</td>
-                                            <td>{{ s.surcursal.nombre }}</td>
+                                            <td>{{ s.Medicamentos.nombre }}</td>
                                             <td>{{ s.fechaInicio }}</td>
-                                            <td>{{ s.fechaFinal }}</td>
                                             <td>{{ s.precio }}</td>
                                             
-                                            <td><a href="eliminarpreciohmedicamento/{{s.id}}" class="btn btn-danger btnEliminacion">Eliminar</a></td>
                                         </tr>
                                         {% endfor %}
                                         

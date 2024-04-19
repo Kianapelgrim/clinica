@@ -41,6 +41,7 @@
                                             <th>ID</th>
                                             <th>Stock</th>
                                             <th>Medicamento</th>
+                                            <th>Lote</th>
                                             
                                         </tr>
                                     </thead>
@@ -51,6 +52,7 @@
                                             <td>{{s.id}}</td>
                                             <td>{{s.stock}}</td>
                                             <td>{{s.medicamento.nombre}}</td>
+                                            <td>{{s.lote.id}}</td>
                                         
                                             <td><a href="editarecmedicamentos/{{s.id}}" class="btn btn-info">Editar</a></td>
                                             <td><a href="eliminarecmedicamentos/{{s.id}}" class="btn btn-danger btnEliminacion">Eliminar</a></td>

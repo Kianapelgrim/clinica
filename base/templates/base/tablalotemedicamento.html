@@ -39,7 +39,6 @@
                                     <thead>
                                         <tr>
                                             <th>ID</th>
-                                            <th>Cantidad</th>
                                             <th>Fecha Vencimiento</th>
                                             <th>Medicamento</th>
                                             
@@ -47,10 +46,9 @@
                                     </thead>
                                   
                                     <tbody>
-                                        {% for s in inventariolotemedicamento %}
+                                        {% for s in lotemedicamento %}
                                         <tr>
                                             <td>{{s.id}}</td>
-                                            <td>{{s.cantidad}}</td>
                                             <td>{{s.fechaVencimiento}}</td>
                                             <td>{{s.medicamento.nombre}}</td>
                                         
