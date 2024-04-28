@@ -20,7 +20,6 @@ urlpatterns = [
     path('registrarproveedores/', views.registrarproveedores, name='registrarproveedores'),
     path('editarProveedores/<int:id>/', views.editarproveedores, name='editarproveedores'),
     path('edicionProveedores/<int:id>/', views.edicionproveedores, name='edicionProveedores'),
-    path('eliminarProveedores/<int:id>/', views.eliminarproveedores, name='eliminarProveedores'),
 
     path('tablamedicamentos', views.tablamedicamentos, name='tablamedicamentos'),
     path('agregarmedicamentos/', views.agregarmedicamentos, name='agregarmedicamentos'),
@@ -31,7 +30,6 @@ urlpatterns = [
 
     path('tablaecmedicamentos', views.tablaecmedicamentos, name='tablaecmedicamentos'),
     path('agregarecmedicamentos/', views.agregarecmedicamentos, name='agregarecmedicamentos'),
-    path('registrarecmedicamentos/', views.registrarecmedicamentos, name='registrarecmedicamentos'),
     path('editarecmedicamentos/<int:id>/', views.editarecmedicamentos, name='editarecmedicamentos'),
     path('edicionecmedicamentos/<int:id>/', views.edicionecmedicamentos, name='edicionecmedicamentos'),
     path('eliminarecmedicamentos/<int:id>/', views.eliminarecmedicamentos, name='eliminarecmedicamentos'),
@@ -63,6 +61,8 @@ urlpatterns = [
 
     path('agregarcargo/', views.agregarcargo, name='agregarcargo'),
 
+    path('editarcargo/<int:pk>/', views.editarcargo, name='editarcargo'),
+
     path('tabladocumento', views.tabladocumento, name='tabladocumento'),
 
     path('tablaempleados', views.tablaempleados, name='tablaempleados'),
@@ -70,6 +70,8 @@ urlpatterns = [
     path('agregarempleados/', views.agregarempleados, name='agregarempleados'),
 
     path('editarempleados/<int:pk>/', views.editarempleados, name='editarempleados'),
+
+    path('eliminarempleados/<int:pk>/', views.eliminarempleados, name='eliminarempleados'),
 
     path('tablatiposalas/', views.tablatiposalas, name='tablatiposalas'),
 
@@ -89,11 +91,17 @@ urlpatterns = [
 
     path('editarpaciente/<int:pk>/', views.editarpaciente, name='editarpaciente'),
 
+    path('tablatipocitas/', views.tablatipocitas, name='tablatipocitas'),
+
+    path('agregartipocita/', views.agregartipocita, name='agregartipocita'),
+
     path('tablacitas', views.tablacitas, name='tablacitas'),
 
     path('agregarcita/', views.agregarcita, name='agregarcita'),
 
     path('editarcita/<int:pk>/', views.editarcita, name='editarcita'),
+
+    path('eliminarcita/<int:id>/', views.eliminarcita, name='eliminarcita'),
 
     path('tablaprescripciones', views.tablaprescripciones, name='tablaprescripciones'),
 
@@ -117,9 +125,22 @@ urlpatterns = [
 
     path('agregarqueja/', views.agregarqueja, name='agregarqueja'),
 
+    path('factura/<int:pk>/', views.factura, name='factura'),
+
     path('tablaparametros/', views.tablaparametros, name='tablaparametros'),
 
     path('agregarparametros/', views.agregarparametros, name='agregarparametros'),
 
+    path('tablaisv/', views.tablaisv, name='tablaisv'),
+
+    path('isv/<int:pk>/', views.isv, name='isv'),
+
     path('editarparametros/<int:pk>/', views.editarparametros, name='editarparametros'),
+
+    path('tablamedicamentosprescripcion/<int:pk>/', views.tablamedicamentosprescripcion, name='tablamedicamentosprescripcion'),
+
+    path('tablafacturas/', views.tablafacturas, name='tablafacturas'),
+
+    path('facturas/<int:pk>/', views.facturas, name='facturas'),
+
 ]   

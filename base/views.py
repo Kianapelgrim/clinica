@@ -6,6 +6,7 @@ from .models import *
 from django.contrib import messages
 from .forms import *
 from django.forms import inlineformset_factory
+from django.utils import timezone
 from django.views import View
 from django.db.models import Max
 from django.forms import modelformset_factory
@@ -19,7 +20,7 @@ def loginPage(request):
         try:
             user = User.objects.get(username=username)
         except:
-            messages.error(request, 'User does not exist')
+            messages.success(request, 'User does not exist')
 
         user = authenticate(request, username=username, password=password)
 
@@ -27,7 +28,7 @@ def loginPage(request):
             login(request, user)
             return redirect('home')
         else:
-            messages.error(request, 'Username OR password does not exit')
+            messages.success(request, 'Username OR password does not exit')
 
     context = {}
     return render(request, 'base/login.html', context)
@@ -117,9 +118,6 @@ def tablaproveedores(request):
 def agregarproveedores(request):
     return render(request, 'base/agregarProveedores.html')
 
-from .models import Proveedores
-from django.shortcuts import redirect
-from django.contrib import messages
 @login_required(login_url="/login")
 def registrarproveedores(request):
     if request.method == 'POST':
@@ -179,21 +177,13 @@ def edicionproveedores(request, id):
 
     return render(request, 'your_template.html', {'proveedores': proveedores})
 
-@login_required(login_url="/login")
-def eliminarproveedores(request, id):
-    proveedores = Proveedores.objects.get(id=id)
-    proveedores.delete()
-
-    messages.success(request, '¡Proveedor eliminado!')
-
-    return redirect('/')
 
 
 @login_required(login_url="/login")
 def tablapreciohmedicamento(request):
     preciohmedicamento = PrecioHMedicamento.objects.all()
     return render(request, 'base/tablapreciohmedicamento.html', {"preciohmedicamento": preciohmedicamento})
-
+@login_required(login_url="/login")
 def tablamedicamentos(request):
     medicamentos = Medicamentos.objects.all()
     
@@ -267,29 +257,17 @@ def tablaecmedicamentos(request):
     return render(request, 'base/tablaecmedicamentos.html',{"ecmedicamentos":ecmedicamentos})
 @login_required(login_url="/login")
 def agregarecmedicamentos(request):
-    medicamentos = Medicamentos.objects.all()
-    surcursales = Surcursales.objects.all()
-    return render(request, 'base/agregarecmedicamentos.html', {'medicamentos': medicamentos, 'surcursales': surcursales})
-
-
-@login_required(login_url="/login")
-def registrarecmedicamentos(request):
     if request.method == 'POST':
-        nombre = request.POST['txtNombre']
-
-        # Create Proveedores object with form data
-        ecmedicamentos = ECMedicamentos.objects.create(
-            nombre=nombre,
-        )
-
-        # Add a success message
-        messages.success(request, '¡Estado de compra de Medicamento registrado!')
-
-        return redirect('/')
+        form = ECMedicamentosForm(request.POST)
+        if form.is_valid():
+            messages.success(request, '¡Estado Compra Medicamento agregado!')#
+            
+            form.save()  # Save the form data to the database
+            return redirect('/') 
     else:
-        # Handle GET requests or other cases
-        # You can return a response for other request methods or handle them accordingly
-        return redirect('/')  # Redirect to home page or render a specific template
+        form = ECMedicamentosForm()
+    context = {'form': form}
+    return render(request, 'base/agregarecmedicamentos.html', context)
  
 @login_required(login_url="/login")
 def editarecmedicamentos(request, id):
@@ -346,69 +324,79 @@ def tablalotemedicamento(request):
 def tablacompra(request):
     compra = CompraMedicamento.objects.all()
     return render(request, 'base/tablacompra.html', {"compra": compra})
+
 @login_required(login_url="/login")
 def compraMedicamento(request):
+    LoteCompraFormSet = inlineformset_factory(CompraMedicamento, LoteMedicamento, 
+                                                  form=LoteForm, extra=2, can_delete=True)
     if request.method == 'POST':
-        compra_form = CompraMedicamentoForm(request.POST)
-        detalle_formset = DetallePedidoFormSet(request.POST)
-        lote_form = LoteForm(request.POST)
-
-        if compra_form.is_valid() and detalle_formset.is_valid() and lote_form.is_valid():
-            compra = compra_form.save()
-            lote = lote_form.save()
-
-            for detalle_form in detalle_formset:
-                detalle = detalle_form.save(commit=False)
-                detalle.compraMedicamentoId = compra
-                detalle.lote = lote
-                detalle.save()
-
-            return redirect('/')  # Redirect as necessary
+        form = CompraMedicamentoForm(request.POST)
+        formset = LoteCompraFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            medicamento = form.save()  # Use a different variable name for the form instance
+            formset.instance = medicamento  # Assign the instance to each form in the formset
+            formset.save()  # Save the DetallePrescripciones instances, now associated with prescripcion
+            messages.success(request, 'Compra guardada con éxito!')
+            return redirect('/')  # Replace '/' with the URL you want to redirect to
     else:
-        compra_form = CompraMedicamentoForm()
-        detalle_formset = DetallePedidoFormSet()
-        lote_form = LoteForm()
+        form = CompraMedicamentoForm()
+        formset = LoteCompraFormSet()
 
-    return render(request, 'base/compraMedicamento.html', {
-        'compra_form': compra_form,
-        'detalle_formset': detalle_formset,
-        'lote_form': lote_form
-    })
+    context = {'form': form, 'formset': formset}
 
+
+    return render(request, 'base/compraMedicamento.html', context)
+
+@login_required(login_url="/login")
 def editarcompramedicamento(request, compra_id):
-    compra = get_object_or_404(CompraMedicamento, id=compra_id)
-    if request.method == 'POST':
-        compra_form = CompraMedicamentoForm(request.POST, instance=compra)
-        if compra_form.is_valid():
-            compra = compra_form.save()
 
-            # Check if estadoCompra is 3
-            if compra.estadoCompra.nombre == "Aprobado":
-                # Get all detalle_pedidos for the specific compraMedicamento
-                detalle_pedidos = DetallePedido.objects.filter(compraMedicamentoId=compra)
-                
-                # Iterate over each detallePedido
-                for detalle_pedido in detalle_pedidos:
-                    # Get the related loteMedicamento
-                    lote = detalle_pedido.lote
+    
+    compra = get_object_or_404(CompraMedicamento, id=compra_id)
+
+    if compra.estadoCompra.id == 9:
+        messages.success(request, 'Esta compra ha sido cancelada y no puede modificarse.')
+        return redirect('/')
+
+    if compra.estadoCompra.id == 8:
+        messages.success(request, 'Esta compra ha sido aprobada y no puede modificarse.')
+        return redirect('/')  # Redirect to a different page, e.g., dashboard
+    
+    LoteCompraFormSet = inlineformset_factory(CompraMedicamento, LoteMedicamento,
+                                              form=LoteForm, extra=0, can_delete=True)
+
+    if request.method == 'POST':
+        form = EditCompraMedicamentoForm(request.POST, instance=compra)
+        formset = LoteCompraFormSet(request.POST, instance=compra)
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.success(request, 'Compra actualizada con éxito!')
+            return redirect('/')
+    else:
+        form = EditCompraMedicamentoForm(instance=compra)
+        formset = LoteCompraFormSet(instance=compra)
+
+    context = {'form': form, 'formset': formset, 'compra_id': compra_id}
+
+    if compra.estadoCompra.nombre == "Aprobado":
+                # Get all lote_med for the specific compraMedicamento
+                lotes = LoteMedicamento.objects.filter(compra=compra)
+
+                # Iterate over each loteMedicamento
+                for lote in lotes:
                     # Get the related medicamento
                     medicamento = lote.medicamento
-                    
-                    # Get or create the related InventarioMedicamento
-                    inventarios = InventarioMedicamento.objects.filter(medicamento=medicamento)
-                    
-                    # Iterate over filtered InventarioMedicamento instances
-                    for inventario in inventarios:
-                        # Update stock and lote in InventarioMedicamento
-                        inventario.stock += detalle_pedido.cantidad
-                        inventario.save()
-            return redirect('/')  # Adjust the redirect as necessary
-    else:
-        compra_form = CompraMedicamentoForm(instance=compra)
 
-    return render(request, 'base/editarcompramedicamento.html', {
-        'compra_form': compra_form,
-    })
+                    # Get or create the related InventarioMedicamento
+                    inventario, created = InventarioMedicamento.objects.get_or_create(medicamento=medicamento)
+                    
+                    # Update stock and lote in InventarioMedicamento
+                    inventario.stock += lote.cantidad
+                    inventario.save()
+
+    return render(request, 'base/editarcompramedicamento.html', context)
+
+
 
 @login_required(login_url="/login")
 def tablametodospago(request): 
@@ -468,6 +456,21 @@ def agregarcargo(request):
     context = {'form': form}
     return render(request, 'base/agregarcargo.html', context)
 
+@login_required(login_url="/login")
+def editarcargo(request,pk):
+    cargo = Cargos.objects.get(pk=pk)
+    if request.method == 'POST':
+        form = CargosForm(request.POST,instance=cargo)
+        if form.is_valid():
+            messages.success(request, '¡Cargo agregado!')#
+            
+            form.save()  # Save the form data to the database
+            return redirect('/') 
+    else:
+        form = CargosForm(instance=cargo)
+    context = {'form': form}
+    return render(request, 'base/agregarcargo.html', context)
+
 
 @login_required(login_url="/login")
 def tablaempleados(request):
@@ -512,6 +515,16 @@ def editarempleados(request, pk):
         documento_form = DocumentoForm(instance=documentos)
     return render(request, 'base/editarempleados.html', {'empleado_form': empleado_form, 'documento_form': documento_form})
    
+
+@login_required(login_url="/login")
+def eliminarempleados(request, pk):
+    empleados = Empleados.objects.get(pk=pk)
+    empleados.delete()
+
+    messages.success(request, '¡Empleado eliminado!')
+
+    return redirect('/')
+
 @login_required(login_url="/login")
 def tablatiposalas(request):
     tiposalas = TipoSalas.objects.all()
@@ -663,6 +676,22 @@ def editarcita(request, pk):
     context = {'form': form}
     return render(request, 'base/agregarcita.html', context)
 
+@login_required(login_url="/login")
+def eliminarcita(request, id):
+    try:
+        cita = Citas.objects.get(id=id)
+        # Use timezone.now() instead of datetime.datetime.now() to get a timezone-aware current time
+        if cita.fecha > timezone.now():
+            cita.delete()
+            messages.success(request, '¡Cita eliminada!')
+        else:
+            messages.success(request, 'No se puede eliminar la cita porque la fecha ya ha pasado.')
+    except Citas.DoesNotExist:
+        messages.success(request, 'La cita no existe.')
+
+    return redirect('/')
+
+
 
 @login_required(login_url="/login")
 def tablaprescripciones(request):
@@ -691,7 +720,7 @@ def agregarprescripcion(request):
     context = {'form': form, 'formset': formset}
     return render(request, 'base/agregarprescripcion.html', context)
 
-
+@login_required(login_url="/login")
 def editarmedicamento(request, medicamento_id):
     medicamento = get_object_or_404(Medicamentos, id=medicamento_id)
 
@@ -706,11 +735,7 @@ def editarmedicamento(request, medicamento_id):
 
     return render(request, 'base/editarmedicamento.html', {'form': medicamentos_form})
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from .models import Medicamentos, PrecioHMedicamento
-from .forms import PrecioHMedicamentoForm
-
+@login_required(login_url="/login")
 def editarpreciomedicamento(request, pk):
     medicamento = get_object_or_404(Medicamentos, id=pk)
     finalprecio = None
@@ -797,6 +822,14 @@ def tablaprescripcionespaciente(request, pk):
     return render(request, 'base/tablaprescripcionespaciente.html', {'paciente': paciente, 'prescripciones': prescripciones})
 
 @login_required(login_url="/login")
+def tablamedicamentosprescripcion(request, pk):
+    prescripcion = get_object_or_404(Prescripciones, pk=pk)
+    # Adjust the query to filter through 'cita' which has a 'paciente' field
+    detallePrescripciones = DetallePrescripciones.objects.filter(prescripcion=prescripcion)
+
+    return render(request, 'base/tablamedicamentosprescripcion.html', {'prescripcion': prescripcion, 'detallePrescripciones': detallePrescripciones})
+
+@login_required(login_url="/login")
 def tablaordenesmedicaspaciente(request, pk):
     paciente = get_object_or_404(Pacientes, pk=pk)
     # Adjust the query to filter through 'cita' which has a 'paciente' field
@@ -846,21 +879,217 @@ def agregarparametros(request):
 def editarparametros(request, pk):
     # Retrieve the existing Parametros instance
     parametros = Parametros.objects.get(pk=pk)
-    
+
     if request.method == 'POST':
         # Populate the form with the data from the POST request and the existing instance
         form = ParametrosEditForm(request.POST, instance=parametros)
         if form.is_valid():
-            # Create a new instance with the form data
-            new_parametros = form.save(commit=False)
-            new_parametros.pk = None  # Set the primary key to None to create a new instance
-            new_parametros.save()  # Save the new instance to the database
+            # Save the form
+            form.save()
             
-            messages.success(request, '¡Parametros agregado!')
+            messages.success(request, '¡Parámetros actualizados!')
             return redirect('/')
     else:
         # Populate the form with the existing instance data
         form = ParametrosEditForm(instance=parametros)
     
+    # Exclude 'surcursal' from the form fields
+    if 'surcursal' in form.fields:
+        form.fields.pop('surcursal')
+    
     context = {'form': form}
     return render(request, 'base/editarparametros.html', context)
+
+@login_required(login_url="/login")
+def factura(request, pk):
+    # Retrieve the specific Cita based on primary key
+    
+
+    cita = get_object_or_404(Citas, pk=pk)
+
+    if Factura.objects.filter(id=cita).exists():
+        messages.success(request, 'Factura ya creada.')
+        return redirect('/')
+    
+
+    
+    
+    isv = get_object_or_404(ISV, pk=1)
+    subtotal=0 
+    # Retrieve all Prescripciones linked to this specific Cita
+    prescripciones = Prescripciones.objects.filter(cita=cita)
+    # Fetch the Parametros associated with the Surcursal of the Cita
+    parametros = Parametros.objects.filter(surcursal=cita.surcursal).first()  # Assumes only one matching Parametros
+
+    if parametros.next_invoice_number == parametros.rangoAutorizadoFinal:
+        messages.success(request, 'Se ha llegado al rangoAutorizadoFinal.')
+        return redirect('/')
+
+    for prescripcion in prescripciones:
+        detalles_prescripciones = DetallePrescripciones.objects.filter(prescripcion=prescripcion)
+        for detalle in detalles_prescripciones:
+            inventario_medicamento = InventarioMedicamento.objects.filter(medicamento=detalle.medicamento).first()
+            lotes = LoteMedicamento.objects.filter(medicamento=detalle.medicamento).order_by('fechaVencimiento')
+            cantidad= detalle.cantidad
+            if inventario_medicamento.stock - detalle.cantidad <= 0:
+                subtotal += 0
+                messages.warning(request, f"{detalle.medicamento.nombre} no tiene stock suficiente.")
+            else:
+
+                subtotal = subtotal + (detalle.medicamento.precio*cantidad)
+            
+                inventario_medicamento.stock -= detalle.cantidad
+                inventario_medicamento.save()
+                for lote in lotes:
+                    if cantidad < lote.cantidad:
+                        lote.cantidad -= cantidad
+                        lote.save()
+                        break
+                    else:
+                        cantidad -= lote.cantidad
+                        lote.cantidad=0
+                        lote.save()
+                    
+
+                
+                
+        
+    subtotal= subtotal + cita.tipocita.precio
+
+    total= subtotal*isv.impuesto
+    total= total+subtotal 
+    
+   
+
+        # Increment the invoice number in Parametros for the next use
+    parametros.next_invoice_number += 1
+    parametros.save()
+
+    if request.method == 'POST':
+        form = FacturaForm(request.POST)
+        if form.is_valid():
+            rtn = form.cleaned_data['rtn']
+            descuento = form.cleaned_data['descuento']
+            metodoPago = form.cleaned_data['metodoPago']
+            new_factura = Factura(
+                id= cita,
+                numero=str(parametros.next_invoice_number),
+                parametros=parametros,
+                surcursal=parametros.surcursal,
+                paciente=cita.paciente,
+                isv= isv,
+                subtotal= subtotal,
+                total = total,
+                rtn=rtn,
+                descuento= descuento,
+                metodoPago= metodoPago
+            )
+            new_factura.save()
+            return redirect('/') 
+
+            
+    else:
+        form = FacturaForm()
+
+    # Prepare the context with the collected data
+    context = {'form': form}
+
+    # Render the response with the collected data in the factura.html template
+    return render(request, 'base/factura.html', context)
+
+#@login_required(login_url="/login")
+#def tablafactura(request, pk):
+ #   prescripciones = Prescripciones.objects.filter(cita=cita)
+    
+    # Initialize an empty list to store the DetallePrescripcion objects
+  #  Costos = []
+
+    # Loop through each Prescripcion and get related DetallePrescripcion
+   # for prescripcion in prescripciones:
+    #    detallesPrescripciones = DetallePrescripciones.objects.filter(prescripcion=prescripcion)
+        # Using extend to add all items from the queryset to the list
+     #   Costos.extend(detallesPrescripciones)
+    #context = {
+     #   'cita': cita,
+      #  'parametros': parametros,
+       # }
+
+    # Render the response with the collected data in the factura.html template
+    #return render(request, 'base/factura.html', context)
+
+@login_required(login_url="/login")
+def tablatipocitas(request):
+    tipocita = TipoCitas.objects.all()
+    return render(request, 'base/tablatipocitas.html',{"tipocita":tipocita})
+
+@login_required(login_url="/login")
+def agregartipocita(request):
+    
+    if request.method == 'POST':
+        form = TipoCitasForm(request.POST)
+        if form.is_valid():
+            messages.success(request, '¡Tipo de Cita agregado!')#
+            
+            form.save()  # Save the form data to the database
+            return redirect('/') 
+    else:
+        form = TipoCitasForm()
+    context = {'form': form}
+    return render(request, 'base/agregartipocita.html', context)
+
+@login_required(login_url="/login")
+def editartipocita(request,pk):
+    tipocita = get_object_or_404(Citas, pk=pk)
+    if request.method == 'POST':
+        form = TipoCitasForm(request.POST, instance=tipocita)
+        if form.is_valid():
+            messages.success(request, '¡Tipo de Cita agregado!')#
+            
+            form.save()  # Save the form data to the database
+            return redirect('/') 
+    else:
+        form = TipoCitasForm(instance=tipocita)
+    context = {'form': form}
+    return render(request, 'base/editartipocita.html', context)
+@login_required(login_url="/login")
+
+def tablaisv(request):
+    isv = ISV.objects.all()
+    return render(request, 'base/tablaisv.html',{"isv":isv})
+
+@login_required(login_url="/login")
+def isv(request,pk):
+    isv = ISV.objects.get(pk=pk)
+    if request.method == 'POST':
+        form = ISVForm(request.POST,instance=isv)
+        if form.is_valid():
+            messages.success(request, '¡ISV actualizado!')#
+            
+            form.save()  # Save the form data to the database
+            return redirect('/') 
+    else:
+        form = ISVForm(instance=isv)
+    context = {'form': form}
+    return render(request, 'base/isv.html', context)
+
+
+@login_required(login_url="/login")
+def tablafacturas(request):
+    facturas = Factura.objects.all()
+    return render(request, 'base/tablafacturas.html',{"facturas":facturas})
+
+@login_required(login_url="/login")
+def facturas(request,pk):
+    factura = Factura.objects.get(pk=pk)
+    cita = Citas.objects.get(pk=pk)
+    detalleFactura = DetalleFactura.objects.filter(cita=cita)
+   
+    context = {
+        'factura': factura,
+        'cita': cita,
+        'detalleFactura': detalleFactura,
+        
+        }
+
+
+    return render(request, 'base/facturas.html',context)

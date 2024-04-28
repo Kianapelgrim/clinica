@@ -86,13 +86,11 @@
                             console.log("Persona error1")
                             // Validación para personaEncargada
                             var personaEncargadaInput = document.getElementById('txtPersonaEncargada');
-                            var personaEncargadaError = document.getElementById('personaEncargadaError');
+                            var personaEncargadaError = document.getElementById('personaEncargada');
                             var personaEncargadaValue = personaEncargadaInput.value.trim();
-                            if (personaEncargadaValue.length < 2 || /^\d+$/.test(personaEncargadaValue) || /^\s+$/.test(personaEncargadaValue)) {
-                                event.preventDefault();
-                                console.log("Persona error")
-                                personaEncargadaError.textContent = 'La persona encargada no puede tener menos de 2 caracteres, ser solo números o solo espacios.';
-                                
+                            if (personaEncargadaValue.trim().length < 2 || !/^[a-zA-Z]+$/.test(personaEncargadaValue.trim())) {
+                                personaEncargadaError.textContent = 'La persona encargada debe tener al menos 2 caracteres y contener solo letras.';
+                                isValid = false;
                             } else {
                                 personaEncargadaError.textContent = '';
                             }

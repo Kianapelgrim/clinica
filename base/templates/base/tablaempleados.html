@@ -47,6 +47,7 @@
                                             <th>Tipo de documento</th>
                                             <th>Documento</th>
                                             <th>Cargo</th>
+                                            <th>Estado</th>
                                            
                                         </tr>
                                     </thead>
@@ -63,8 +64,8 @@
                                             <td>{{s.documento.tipodocumento.nombre}}</td>
                                             <td>{{s.documento.informacion}}</td>
                                             <td>{{s.cargo.nombre}}</td>
+                                            <td>{{s.estado}}</td>
                                             <td><a href="editarempleados/{{s.id}}" class="btn btn-info">Editar</a></td>
-                                            <td><a href="eliminarempleados/{{s.id}}" class="btn btn-danger btnEliminacion">Eliminar</a></td>
 
                                         </tr>
                                         {% endfor %}

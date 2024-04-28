@@ -88,12 +88,11 @@
                         
                             // Validación para personaEncargada
                             var personaEncargadaInput = document.getElementById('txtPersonaEncargada');
-                            var personaEncargadaError = document.getElementById('personaEncargadaError'); // Asegúrate de tener este elemento en tu HTML
+                            var personaEncargadaError = document.getElementById('personaEncargada');
                             var personaEncargadaValue = personaEncargadaInput.value.trim();
-                            // Se agrega validación para no permitir números o caracteres especiales al inicio
-                            if (personaEncargadaValue.length < 2 || /^[0-9\W]/.test(personaEncargadaValue)) {
-                                personaEncargadaError.textContent = 'La persona encargada no puede tener menos de 2 caracteres, ni empezar con números o caracteres especiales.';
-                                event.preventDefault();
+                            if (personaEncargadaValue.trim().length < 2 || !/^[a-zA-Z]+$/.test(personaEncargadaValue.trim())) {
+                                personaEncargadaError.textContent = 'La persona encargada debe tener al menos 2 caracteres y contener solo letras.';
+                                isValid = false;
                             } else {
                                 personaEncargadaError.textContent = '';
                             }

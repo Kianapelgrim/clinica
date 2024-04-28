@@ -6,8 +6,12 @@ from django.contrib.auth.models import User
 import phonenumbers
 from django.utils import timezone
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from simple_history.models import HistoricalRecords
+import logging
+logger = logging.getLogger(__name__)
+
 
 
 
@@ -77,8 +81,9 @@ class PrecioHMedicamento(models.Model):
    
 class LoteMedicamento(models.Model):
     id = models.AutoField(primary_key=True)
-    # Correctly set 'null=True' and specify the model
+    compra = models.ForeignKey('CompraMedicamento', on_delete=models.SET_NULL,null=True)
     fechaVencimiento = models.DateField(null=True)
+    cantidad = models.IntegerField(null=True)
     medicamento = models.ForeignKey('Medicamentos', on_delete=models.CASCADE,null=True)
 
 
@@ -99,7 +104,6 @@ class InventarioMedicamento(models.Model):
     stock = models.IntegerField()
     # Specify the model for ForeignKey and correct 'null' capitalization
     medicamento = models.ForeignKey('Medicamentos', on_delete=models.CASCADE,null=True)
-    lote = models.ForeignKey(LoteMedicamento, on_delete=models.SET_NULL,null=True)
 
 
     
@@ -187,6 +191,10 @@ class Cargos(models.Model):
         return self.nombre
 
 class Empleados(models.Model):
+    ESTADO_CHOICES = [
+        ('A', 'Activo'),
+        ('I', 'Inactivo'),
+    ]
     id = models.AutoField(primary_key=True)
     nombre= models.CharField(max_length=255, blank=False)
     fechaNacimiento = models.DateField()
@@ -195,6 +203,7 @@ class Empleados(models.Model):
     direccion= models.CharField(max_length=255, blank=False)
     documento=models.ForeignKey('Documento',on_delete = models.SET_NULL, null = True)
     cargo=models.ForeignKey('Cargos',on_delete = models.SET_NULL, null = True) 
+    estado = models.CharField(max_length=1, choices=ESTADO_CHOICES, verbose_name="Estado",null=True)
 
 
 
@@ -235,6 +244,16 @@ class Pacientes(models.Model):
     def __str__(self):
         return self.nombre
     
+class TipoCitas(models.Model):
+    id = models.AutoField(primary_key=True)
+    nombre = models.TextField(blank=True)
+    precio = models.DecimalField(max_digits=12, decimal_places=2, null = True, blank=False)
+    history = HistoricalRecords()
+    
+    def __str__(self):
+        return self.nombre
+
+    
 class Citas(models.Model):
     id = models.AutoField(primary_key=True)
     fecha = models.DateTimeField()
@@ -245,13 +264,14 @@ class Citas(models.Model):
     medico=models.ForeignKey('Empleados',on_delete = models.SET_NULL, null = True)
     sala=models.ForeignKey('Salas',on_delete = models.SET_NULL, null = True)
     surcursal=models.ForeignKey('Surcursales',on_delete = models.SET_NULL, null = True)
+    tipocita=models.ForeignKey('TipoCitas',on_delete = models.SET_NULL, null = True)
     
     def __str__(self):
-        return self.paciente.nombre
+        return f"{self.paciente.nombre} - {self.fecha}"
 
 class Prescripciones(models.Model):
     id = models.AutoField(primary_key=True)
-    indicaciones = models.TextField(blank=True)
+    indicaciones = models.TextField()
     fecha = models.DateField(auto_now_add=True)
     cita=models.ForeignKey('Citas',on_delete = models.SET_NULL, null = True)
     
@@ -261,6 +281,7 @@ class Prescripciones(models.Model):
 class DetallePrescripciones(models.Model):
     id = models.AutoField(primary_key=True)
     medicamento=models.ForeignKey('Medicamentos',on_delete = models.SET_NULL, null = True)
+    cantidad= models.IntegerField(null=True)
     prescripcion=models.ForeignKey('Prescripciones',on_delete = models.SET_NULL, null = True)
     
     def __str__(self):
@@ -283,12 +304,19 @@ class HistorialClinico(models.Model):
     
     def __str__(self):
         return self.paciente.nombre
-    
+
+class ISV(models.Model):
+    id = models.AutoField(primary_key=True)
+    creado = models.DateField(auto_now_add=True)
+    impuesto = models.DecimalField(max_digits=10, decimal_places=2, null=False, blank=False)
+
+    def __str__(self):
+        return f"{self.creado} - {self.precio}"
 
 class Parametros(models.Model):
     id = models.AutoField(primary_key=True)
     surcursal= models.ForeignKey('Surcursales', on_delete= models.SET_NULL, null= True)
-    cai = models.CharField(max_length=30)
+    cai = models.CharField(max_length=35)
     rtn = models.CharField(max_length=30)
     razonSocial = models.CharField(max_length=30)
     nombreEmpresa = models.CharField(max_length=30)
@@ -297,26 +325,38 @@ class Parametros(models.Model):
     fechaLimiteEmision = models.DateField()
     correoElectronico = models.EmailField()
     telefono = models.CharField(max_length=20)
+    next_invoice_number = models.IntegerField(default=0)
     def __str__(self):
         return f"{self.id} - {self.surcursal.nombre}"
-
+    
 
 class Factura(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.OneToOneField(Citas, on_delete=models.CASCADE, primary_key=True)
     numero= models.CharField(max_length=200, null=True)
     surcursal= models.ForeignKey('Surcursales', on_delete= models.SET_NULL, null= True)
     paciente= models.ForeignKey('Pacientes', on_delete= models.SET_NULL, null= True)
-    fecha = models.DateField()
-    isv = models.DecimalField(max_digits=12, decimal_places=2, null=False, blank=False)
+    fecha = models.DateField(auto_now_add=True)
+    isv = models.ForeignKey(ISV, on_delete=models.SET_NULL,null=True)
     metodoPago= models.ForeignKey('MetodosPago', on_delete= models.SET_NULL, null= True)
     parametros= models.ForeignKey('Parametros', on_delete= models.SET_NULL, null= True)
-    descuento= models.DecimalField(max_digits=12, decimal_places=2, null=False, blank=False)
+    descuento= models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=False)
+    subtotal= models.DecimalField(max_digits=12, decimal_places=2, null=False, blank=False)
     total= models.DecimalField(max_digits=12, decimal_places=2, null=False, blank=False)
+    rtn = models.CharField(max_length=14, blank=True, null=True)
+
+
  
     def __str__(self):
         return f"{self.paciente.nombre} - {self.fecha}"
 
-from django.db import models
+class DetalleFactura(models.Model):
+    id = models.AutoField(primary_key=True)
+    cita = models.ForeignKey(Citas, on_delete=models.SET_NULL, null=True)
+    detallePrescripcion = models.ForeignKey(DetallePrescripciones, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+            return f"Detalle Factura - {self.factura}"
+
 
 class QuejasYSugerencias(models.Model):
     TIPOS = (
@@ -329,8 +369,41 @@ class QuejasYSugerencias(models.Model):
 
     def __str__(self):
         return f"{self.tipo} - {self.fecha}"
+    
+@receiver(post_save, sender=Factura)
+def create_detalle_factura(sender, instance, created, **kwargs):
+    if created:
+        cita = instance.id
+        prescripciones = Prescripciones.objects.filter(cita=cita)
+        for prescripcion in prescripciones:
+            detalles_prescripciones = DetallePrescripciones.objects.filter(prescripcion=prescripcion)
+            for detalle in detalles_prescripciones:
+                new_detalle_factura = DetalleFactura(
+                    cita=cita,
+                    detallePrescripcion=detalle
+                )
+                new_detalle_factura.save()
 
+@receiver(post_save, sender=CompraMedicamento)
+def update_inventory(sender, instance, created, **kwargs):
+    if instance.estadoCompra.id == 8:
+        logger.debug("Updating inventory for estadoCompra 8")
+        lotes = LoteMedicamento.objects.filter(compra=instance)
+        for lote in lotes:
+            inventario, created = InventarioMedicamento.objects.get_or_create(medicamento=lote.medicamento)
+            inventario.stock += lote.cantidad
+            inventario.save()
 
+@receiver(pre_save, sender=Parametros)
+def reset_invoice_number(sender, instance, **kwargs):
+    if instance.pk:
+        old_instance = Parametros.objects.get(pk=instance.pk)
+        if instance.rangoAutorizadoInicial != old_instance.rangoAutorizadoInicial:
+            # Reset the next_invoice_number to start from the new initial range
+            instance.next_invoice_number = instance.rangoAutorizadoInicial
+    else:
+        # For a new Parametros instance, start the number from rangoAutorizadoInicial
+        instance.next_invoice_number = instance.rangoAutorizadoInicial
 
 @receiver(post_save, sender=Pacientes)
 def create_historial_clinico(sender, instance, created, **kwargs):
@@ -342,14 +415,3 @@ def create_inventario_medicamento(sender, instance, created, **kwargs):
     if created:
         InventarioMedicamento.objects.create(medicamento=instance, stock=0)
 
-@receiver(post_save, sender=CompraMedicamento)
-def update_stock(sender, instance, created, **kwargs):
-    # Check if the instance is created or updated and if the estadoCompra is "Aprobado"
-    if not created and instance.estadoCompra == 'Aprobado':
-        # Get all detallePedido related to the CompraMedicamento instance
-        detalles = DetallePedido.objects.filter(compraMedicamentoId=instance)
-        # Update the stock in InventarioMedicamento for each detallePedido
-        for detalle in detalles:
-            inventario = InventarioMedicamento.objects.get(medicamento=detalle.medicamento)
-            inventario.stock += detalle.cantidad
-            inventario.save()

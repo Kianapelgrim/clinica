@@ -19,7 +19,6 @@
                                 <!-- Content for the second column -->
                             </div>
                             <div class="col">
-                                <a href="/agregalotecmedicamentos/" class="btn btn-primary">Agregar</a>
 
                                 <!-- Content for the third column -->
                             </div>
@@ -41,6 +40,8 @@
                                             <th>ID</th>
                                             <th>Fecha Vencimiento</th>
                                             <th>Medicamento</th>
+                                            <th>Cantidad</th>
+                                            <th>Compra</th>
                                             
                                         </tr>
                                     </thead>
@@ -51,9 +52,8 @@
                                             <td>{{s.id}}</td>
                                             <td>{{s.fechaVencimiento}}</td>
                                             <td>{{s.medicamento.nombre}}</td>
-                                        
-                                            <td><a href="editarlotemedicamentos/{{s.id}}" class="btn btn-info">Editar</a></td>
-                                            <td><a href="eliminarlotemedicamentos/{{s.id}}" class="btn btn-danger btnEliminacion">Eliminar</a></td>
+                                            <td>{{s.cantidad}}</td>
+                                            <td>{{s.compra.id}}</td>
                                         </tr>
                                         {% endfor %}
                                         

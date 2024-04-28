@@ -24,22 +24,43 @@
                     
                     <form method="post">
                         {% csrf_token %}
-                        <div>
-                            <h3>Información de la Compra</h3>
-                            {{ compra_form.as_p }}
+                        {{ form.as_p }}  <!-- CompraMedicamentoForm fields -->
+                    
+                        <div style="display:none;">
+                            {{ formset.management_form }}
                         </div>
-                        <div>
-                            <h3>Detalles del Pedido</h3>
-                            {{ detalle_formset.management_form }}
-                            {% for form in detalle_formset %}
-                                {{ form.as_p }}
-                                <h4>Lote de Medicamento</h4>
-                                {{ lote_form.as_p }}
+                    
+                        <h3>Lotes de Medicamentos</h3>
+                        <div id="lote-medicamento-formset">
+                            {% for form in formset %}
+                                <div class="lote-form">
+                                    {{ form.as_p }}
+                                </div>
                             {% endfor %}
                         </div>
-                        <button type="submit" style="max-width: 300px;" class="btn btn-success btn-block text-white">Agregar</button>
-                        <button type="submit" style="max-width: 300px;" class="btn btn-success btn-block text-white">Guardar</button>
+                    
+                        <button type="button" id="add-lote-form">Add Lote</button>
+                        <button type="submit" class="btn btn-primary">Guardar Compra</button>
                     </form>
+                    
+                    <script>
+                        document.getElementById('add-lote-form').addEventListener('click', function() {
+                            var formIndex = $('#lote-medicamento-formset').children().length - 1;
+                            var newElement = $('#lote-medicamento-formset .lote-form:last').clone(true);
+                            newElement.find(':input').each(function() {
+                                var name = $(this).attr('name').replace('-' + (formIndex-1) + '-', '-' + formIndex + '-');
+                                var id = 'id_' + name;
+                                $(this).attr({'name': name, 'id': id}).val('').removeAttr('checked');
+                            });
+                            newElement.find('label').each(function() {
+                                var newFor = $(this).attr('for').replace('-' + (formIndex-1) + '-', '-' + formIndex + '-');
+                                $(this).attr('for', newFor);
+                            });
+                            $('#lote-medicamento-formset').append(newElement);
+                            $('#id_' + '{{ formset.prefix }}-TOTAL_FORMS').val(parseInt($('#id_' + '{{ formset.prefix }}-TOTAL_FORMS').val()) + 1);
+                        });
+                    </script>
+                        
 
 
                     <!-- Include the necessary JavaScript libraries -->

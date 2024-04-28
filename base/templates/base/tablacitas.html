@@ -47,6 +47,10 @@
                                             <th>Sala</th>
                                             <th>Surcursal</th>
                                             <th>Descripción</th>
+                                            <th>Tipo de Cita</th>
+                                            <th></th>
+                                            <th></th>
+                                            <th></th>
                                          
                                            
                                         </tr>
@@ -64,7 +68,11 @@
                                             <td>{{s.sala.nombre}}</td>
                                             <td>{{s.surcursal.nombre}}</td>
                                             <td>{{s.descripcion}}</td>
+                                            <td>{{s.tipocita.nombre}}</td>
+                                            <td><a href="factura/{{s.id}}" class="btn btn-info">Crear Factura</a></td>
                                             <td><a href="editarcita/{{s.id}}" class="btn btn-info">Editar</a></td>
+                                            <td><a href="eliminarcita/{{s.id}}" class="btn btn-danger btnEliminacion">Eliminar</a></td>
+
                                         </tr>
                                         {% endfor %}
                                         

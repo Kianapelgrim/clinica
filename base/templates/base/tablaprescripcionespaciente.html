@@ -41,6 +41,7 @@
                                             <th>Indicaciones</th>
                                             <th>Paciente</th>
                                             <th>Fecha de Emision</th>
+                                            <th></th>
                                          
                                            
                                         </tr>
@@ -53,6 +54,8 @@
                                             <td>{{s.indicaciones}}</td>
                                             <td>{{s.cita.paciente.nombre}}</td>
                                             <td>{{s.fecha}}</td>
+                                            <td><a href="/tablamedicamentosprescripcion/{{s.id}}" class="btn btn-info">Medicamentos</a></td>
+
                                         </tr>
                                         {% endfor %}
                                         

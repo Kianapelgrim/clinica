@@ -6,6 +6,30 @@ from django.forms import DateTimeInput, EmailInput, ModelForm, DateInput, TextIn
 from django.forms.models import inlineformset_factory, modelformset_factory
 from .models import *
 
+class ECMedicamentosForm(ModelForm):
+    class Meta:
+        model = ECMedicamentos
+        fields = '__all__'
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            })
+        }
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if not nombre.replace(" ", "").isalpha():  # Allows spaces within the name but checks the rest for alphabetic characters
+            raise forms.ValidationError("El nombre solo puede contener letras.")
+        if nombre.isspace() or len(nombre) < 3:
+            raise forms.ValidationError("El nombre debe tener al menos 3 caracteres y no puede estar vacío.")
+
+        # Check for uniqueness of nombre
+        if TipoSalas.objects.filter(nombre__iexact=nombre).exists():
+            raise forms.ValidationError("Una sala con este nombre ya existe.")
+        return nombre
+
+
 class PrecioHMedicamentoForm(ModelForm):
     class Meta: 
         model = PrecioHMedicamento
@@ -18,29 +42,12 @@ class PrecioHMedicamentoForm(ModelForm):
             }),
         }
 
-    def clean(self):
-        cleaned_data = super().clean()
-        medicamento = cleaned_data.get('medicamento')
-        precio = cleaned_data.get('precio')
-        fecha_inicio = cleaned_data.get('fechaInicio')
-        fecha_final = cleaned_data.get('fechaFinal')
-        today = date.today()
+    def clean_precio(self):
+        precio = self.cleaned_data.get('precio')
+        if precio is not None and precio <= 0:
+            raise forms.ValidationError("El precio no puede ser menor que 0.")
+        return precio    
 
-        # Check if fechaInicio is later than today
-        if fecha_inicio and fecha_inicio > today:
-            raise forms.ValidationError("La fecha de inicio no puede ser posterior a hoy.")
-
-        # Check if fechaFinal is later than today
-        if fecha_final and fecha_final > today:
-            raise forms.ValidationError("La fecha final no puede ser posterior a hoy.")
-
-        # Check if the current price is the same as the last one for the medication
-        if medicamento:
-            last_price = PrecioHMedicamento.objects.filter(medicamento=medicamento).order_by('-fechaInicio').first()
-            if last_price and last_price.precio == precio:
-                raise forms.ValidationError("El precio no puede ser igual al último precio registrado para este medicamento.")
-
-        return cleaned_data
 
 class MedicamentosForm(forms.ModelForm):
     class Meta:
@@ -111,25 +118,63 @@ class CompraMedicamentoForm(forms.ModelForm):
             }),
         }
 
-class DetallePedidoForm(forms.ModelForm):
-    # Assume each detail can optionally create a LoteMedicamento
+    def __init__(self, *args, **kwargs):
+        super(CompraMedicamentoForm, self).__init__(*args, **kwargs)
+        estado_choices = self.fields['estadoCompra'].choices
+        # Assuming 'Aprobado' is one of the options and you know its value, e.g., 'aprobado'
+        filtered_choices = [choice for choice in estado_choices if choice[0] not in (8, 9)]
+        self.fields['estadoCompra'].choices = filtered_choices
+
+    def clean_precioTotal(self):
+        precio_total = self.cleaned_data.get('precioTotal')
+        if precio_total is not None and precio_total <= 0:
+            raise forms.ValidationError("El precio total no puede ser menor que 0.")
+        return precio_total
+
+class EditCompraMedicamentoForm(forms.ModelForm):
     class Meta:
-        model = DetallePedido
-        fields = [ 'cantidad']
+        model = CompraMedicamento
+        fields = '__all__'
         widgets = {
-            'cantidad': forms.Select(attrs={
+            'fechaPedido': forms.DateInput(attrs={
+                'type': 'date',
                 'class': 'form-control',
                 'style': 'max-width: 300px;',
-            })
+            }),
+            'fechaRecibido': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            }),
+            'fechaDespacho': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            }),
+            'proveedor': forms.Select(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            }),
+            'precioTotal': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            }),
+            'estadoCompra': forms.Select(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            }),
+            'numeroFactura': forms.TextInput(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            }),
         }
 
-DetallePedidoFormSet = inlineformset_factory(
-    CompraMedicamento,
-    DetallePedido,
-    form=DetallePedidoForm,
-    extra=1,
-    can_delete=True
-)
+    def clean_precioTotal(self):
+            precio_total = self.cleaned_data.get('precioTotal')
+            if precio_total is not None and precio_total <= 0:
+                raise forms.ValidationError("El precio total no puede ser menor que 0.")
+            return precio_total
+
 
 class LoteForm(forms.ModelForm):
     class Meta:
@@ -144,16 +189,31 @@ class LoteForm(forms.ModelForm):
             'medicamento': forms.Select(attrs={
                 'class': 'form-control',
                 'style': 'max-width: 300px;',
+            }),
+             'compra': forms.Select(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            }),
+            'cantidad': forms.TextInput(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
             })
+        
         }
 
+    def clean_cantidad(self):
+        cantidad = self.cleaned_data.get('cantidad')
+        if cantidad is not None and cantidad < 1:
+            raise forms.ValidationError("La cantidad no puede ser menor que 1.")
+        return cantidad
+    
+    def clean_fechaVencimiento(self):
+        fecha_vencimiento = self.cleaned_data.get('fechaVencimiento')
+        if fecha_vencimiento <= timezone.now().date():
+            raise forms.ValidationError("La fecha de vencimiento debe ser posterior a hoy.")
+        return fecha_vencimiento
 
-LoteFormSet = modelformset_factory(
-    LoteMedicamento,
-    form=LoteForm,
-    extra=1,
-    can_delete=True
-)
+
          
 
 class MetodosPagoForm(forms.ModelForm):
@@ -170,19 +230,11 @@ class MetodosPagoForm(forms.ModelForm):
     
 
     def clean_nombre(self):
-        nombre = self.cleaned_data.get('nombre').strip()  # Using strip() to remove leading/trailing whitespace
-
-        # Check if the nombre is less than 3 characters
-        if len(nombre) < 3:
-            raise forms.ValidationError("El nombre debe tener al menos 3 caracteres.")
-
-        # Check if the nombre contains only spaces (after stripping whitespace)
-        if not nombre:
-            raise forms.ValidationError("El nombre no puede estar vacío.")
-
-        # Check if the nombre contains only letters
-        if not nombre.isalpha():
+        nombre = self.cleaned_data.get('nombre')
+        if not nombre.replace(" ", "").isalpha():  # Allows spaces within the name but checks the rest for alphabetic characters
             raise forms.ValidationError("El nombre solo puede contener letras.")
+        if nombre.isspace() or len(nombre) < 3:
+            raise forms.ValidationError("El nombre debe tener al menos 3 caracteres y no puede estar vacío.")
 
         # Check for uniqueness of nombre
         if MetodosPago.objects.filter(nombre__iexact=nombre).exists():
@@ -204,20 +256,10 @@ class TipoDocumentoForm(ModelForm):
 
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre')
-
-        # Check if the nombre is less than 3 characters
-        if len(nombre) < 3:
-            raise forms.ValidationError("El nombre debe tener al menos 3 caracteres.")
-
-        # Check if the nombre contains only tabs
-        if nombre.isspace():
-            raise forms.ValidationError("El nombre no puede contener solo espacios.")
-
-        # Check if the nombre contains only numbers
-        if nombre.isdigit():
-            raise forms.ValidationError("El nombre no puede contener solo números.")
-
-        return nombre
+        if not nombre.replace(" ", "").isalpha():  # Allows spaces within the name but checks the rest for alphabetic characters
+            raise forms.ValidationError("El nombre solo puede contener letras.")
+        if nombre.isspace() or len(nombre) < 3:
+            raise forms.ValidationError("El nombre debe tener al menos 3 caracteres y no puede estar vacío.")
     
   # Adjust this import based on your project structure
 
@@ -284,7 +326,7 @@ class DocumentoForm(forms.ModelForm):
 class EmpleadosForm(forms.ModelForm):
     class Meta:
         model = Empleados
-        fields = ['nombre','fechaNacimiento','telefono','correoElectronico','direccion','cargo',]
+        fields = ['nombre','fechaNacimiento','telefono','correoElectronico','direccion','cargo','estado']
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -315,6 +357,11 @@ class EmpleadosForm(forms.ModelForm):
                 'class': 'form-control',
                 'style': 'max-width: 300px;',
             }),
+            'estado': forms.Select(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+                'placeholder': 'Nombre',
+            })
         }
 
     def clean_nombre(self):
@@ -332,25 +379,33 @@ class EmpleadosForm(forms.ModelForm):
         if age < 18 or age > 100:
             raise forms.ValidationError("El empleado debe tener 18 años o más y menos de 100 años.")
         return fechaNacimiento
-
     def clean_telefono(self):
         telefono = self.cleaned_data.get('telefono')
+        instance = self.instance
+        if Empleados.objects.filter(telefono=telefono).exclude(id=instance.id).exists():
+            raise ValidationError("Este teléfono ya está registrado.")
         if not telefono.isdigit():
-            raise forms.ValidationError("El teléfono debe contener solo dígitos.")
+            raise ValidationError("El teléfono debe contener solo dígitos.")
         if len(telefono) != 8:
-            raise forms.ValidationError("El teléfono debe tener exactamente 8 dígitos.")
+            raise ValidationError("El teléfono debe tener exactamente 8 dígitos.")
         if telefono[0] not in ['2', '3', '8', '9']:
-            raise forms.ValidationError("El teléfono debe comenzar con 22, 3, 8, o 9.")
+            raise ValidationError("El teléfono debe comenzar con 22, 3, 8, o 9.")
         return telefono
 
     def clean_correoElectronico(self):
         correoElectronico = self.cleaned_data.get('correoElectronico')
+        instance = self.instance
+        if Empleados.objects.filter(correoElectronico=correoElectronico).exclude(id=instance.id).exists():
+            raise ValidationError("Este correo electrónico ya está registrado.")
         pattern = r"[^@]+@[^@]+\.[^@]+"
         if not re.match(pattern, correoElectronico):
-            raise forms.ValidationError("Correo electrónico inválido.")
+            raise ValidationError("Correo electrónico inválido.")
+        pattern1 = r"[^@]+@[^@]+\.[a-zA-Z]{1,3}$"  # New pattern to match maximum of 3 letters after the .
+        if not re.match(pattern1, correoElectronico):
+            raise ValidationError("Correo electrónico inválido.")
         parts = correoElectronico.split('@')[1].split('.')
         if len(parts[0]) < 2 or len(parts[1]) < 2:
-            raise forms.ValidationError("El correo electrónico debe tener al menos 2 caracteres después del @ y al menos 2 caracteres después del punto.")
+            raise ValidationError("El correo electrónico debe tener al menos 2 caracteres después del @ y al menos 2 caracteres después del punto.")
         return correoElectronico
 
     def clean_direccion(self):
@@ -378,6 +433,10 @@ class TipoSalasForm(ModelForm):
             raise forms.ValidationError("El nombre solo puede contener letras.")
         if nombre.isspace() or len(nombre) < 3:
             raise forms.ValidationError("El nombre debe tener al menos 3 caracteres y no puede estar vacío.")
+
+        # Check for uniqueness of nombre
+        if TipoSalas.objects.filter(nombre__iexact=nombre).exists():
+            raise forms.ValidationError("Una sala con este nombre ya existe.")
         return nombre
 
 
@@ -406,6 +465,10 @@ class SalasForm(ModelForm):
         nombre = self.cleaned_data.get('nombre')
         if nombre.isspace() or len(nombre) < 3:
             raise forms.ValidationError("El nombre debe tener al menos 3 caracteres y no puede estar vacío.")
+        
+        if Salas.objects.filter(nombre=nombre).exists():
+            raise ValidationError("Una sala con este nombre ya existe.")
+        
         return nombre
       
 class PacientesForm(forms.ModelForm):
@@ -463,22 +526,31 @@ class PacientesForm(forms.ModelForm):
 
     def clean_telefono(self):
         telefono = self.cleaned_data.get('telefono')
+        instance = self.instance
+        if Pacientes.objects.filter(telefono=telefono).exclude(id=instance.id).exists():
+            raise ValidationError("Este teléfono ya está registrado.")
         if not telefono.isdigit():
-            raise forms.ValidationError("El teléfono debe contener solo dígitos.")
+            raise ValidationError("El teléfono debe contener solo dígitos.")
         if len(telefono) != 8:
-            raise forms.ValidationError("El teléfono debe tener exactamente 8 dígitos.")
+            raise ValidationError("El teléfono debe tener exactamente 8 dígitos.")
         if telefono[0] not in ['2', '3', '8', '9']:
-            raise forms.ValidationError("El teléfono debe comenzar con 22, 3, 8, o 9.")
+            raise ValidationError("El teléfono debe comenzar con 22, 3, 8, o 9.")
         return telefono
 
     def clean_correoElectronico(self):
         correoElectronico = self.cleaned_data.get('correoElectronico')
+        instance = self.instance
+        if Pacientes.objects.filter(correoElectronico=correoElectronico).exclude(id=instance.id).exists():
+            raise ValidationError("Este correo electrónico ya está registrado.")
         pattern = r"[^@]+@[^@]+\.[^@]+"
         if not re.match(pattern, correoElectronico):
-            raise forms.ValidationError("Correo electrónico inválido.")
+            raise ValidationError("Correo electrónico inválido.")
+        pattern1 = r"[^@]+@[^@]+\.[a-zA-Z]{1,3}$"  # New pattern to match maximum of 3 letters after the .
+        if not re.match(pattern1, correoElectronico):
+            raise ValidationError("Correo electrónico inválido.")
         parts = correoElectronico.split('@')[1].split('.')
         if len(parts[0]) < 2 or len(parts[1]) < 2:
-            raise forms.ValidationError("El correo electrónico debe tener al menos 2 caracteres después del @ y al menos 2 caracteres después del punto.")
+            raise ValidationError("El correo electrónico debe tener al menos 2 caracteres después del @ y al menos 2 caracteres después del punto.")
         return correoElectronico
 
     def clean_direccion(self):
@@ -489,13 +561,6 @@ class PacientesForm(forms.ModelForm):
             raise forms.ValidationError("La dirección no puede tener números ni caracteres especiales al inicio.")
         return direccion
     
-class CitasForm(ModelForm):
-    class Meta: 
-        model = Citas
-        fields = '__all__'
-        widgets = {
-        'fecha': DateTimeInput(attrs={'type': 'datetime-local'}),
-        }
 
 class CitasForm(ModelForm):
     class Meta: 
@@ -529,6 +594,10 @@ class CitasForm(ModelForm):
                 'class': 'form-control',
                 'style': 'max-width: 300px;',
             }),
+            'tipocita': forms.Select(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            })
         }
 
     def clean_fecha(self):
@@ -544,8 +613,8 @@ class CitasForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CitasForm, self).__init__(*args, **kwargs)
-        # Adjust the queryset for the 'medico' field to include only employees with cargo_id = 4
-        self.fields['medico'].queryset = Empleados.objects.filter(cargo=4)
+        # Adjust the queryset for the 'medico' field to include only employees with cargo_id = 4 and estado = 'Activo'
+        self.fields['medico'].queryset = Empleados.objects.filter(cargo=4, estado='A')
 
     def clean(self):
         cleaned_data = super().clean()
@@ -571,7 +640,7 @@ class CitasForm(ModelForm):
         if commit:
             instance.save()
         return instance
-    
+
 
 class DetallePrescripcionesForm(forms.ModelForm):
     class Meta:
@@ -586,7 +655,19 @@ class DetallePrescripcionesForm(forms.ModelForm):
                 'class': 'form-control',
                 'style': 'max-width: 300px;',
             }),
+            'cantidad': forms.TextInput(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            })
+        
         }
+
+    def clean_cantidad(self):
+        cantidad = self.cleaned_data.get('cantidad')
+        if cantidad is not None and cantidad < 1:
+            raise forms.ValidationError("La cantidad no puede ser menor que 1.")
+        return cantidad
+    
         
 class PrescripcionesForm(forms.ModelForm):
     class Meta:
@@ -598,22 +679,13 @@ class PrescripcionesForm(forms.ModelForm):
                 'style': 'max-width: 300px;',
                 'rows': 3,  # Set the number of rows for the textarea
             }),
-            'fecha': forms.DateInput(attrs={
-                'class': 'form-control',
-                'style': 'max-width: 300px;',
-                'type': 'date',  # Change input type to date
-            }),
             'cita': forms.Select(attrs={
                 'class': 'form-control',
                 'style': 'max-width: 300px;',
             }),
         }
-
-    def clean(self):
-        cleaned_data = super().clean()
-        indicaciones = cleaned_data.get('indicaciones')
-
-        # Validation for indicaciones
+    def clean_indicaciones(self):
+        indicaciones = self.cleaned_data.get('indicaciones')
         if indicaciones:
             if len(indicaciones) < 3:
                 self.add_error('indicaciones', "La indicaciones debe tener al menos 3 caracteres.")
@@ -621,8 +693,8 @@ class PrescripcionesForm(forms.ModelForm):
                 self.add_error('indicaciones', "La indicaciones no puede contener solo espacios.")
             if indicaciones.isdigit():
                 self.add_error('indicaciones', "La indicaciones no puede contener solo números.")
-        
-        return cleaned_data
+        return indicaciones
+    
     
 
 class   OrdenesMedicasForm(forms.ModelForm):
@@ -662,15 +734,59 @@ class   OrdenesMedicasForm(forms.ModelForm):
         return cleaned_data
 
 
-class   HistorialClinicoForm(forms.ModelForm):
+class   TipoCitasForm(forms.ModelForm):
     class Meta:
-        model =  HistorialClinico
+        model =  TipoCitas
         fields = '__all__'
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            }),
+            'precio': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            })
+        }
+    def clean_precio(self):
+            precio = self.cleaned_data.get('precio')
+            if precio is not None and precio <= 0:
+                raise forms.ValidationError("El precio total no puede ser menor que 0.")
+            return precio
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if not nombre.replace(" ", "").isalpha():  # Allows spaces within the name but checks the rest for alphabetic characters
+            raise forms.ValidationError("El nombre solo puede contener letras.")
+        if nombre.isspace() or len(nombre) < 3:
+            raise forms.ValidationError("El nombre debe tener al menos 3 caracteres y no puede estar vacío.")
+
+        # Check for uniqueness of nombre
+        if TipoSalas.objects.filter(nombre__iexact=nombre).exists():
+            raise forms.ValidationError("Una sala con este nombre ya existe.")
+        return nombre
+        
+
 
 class   QuejasYSugerenciasForm(forms.ModelForm):
     class Meta:
         model =  QuejasYSugerencias
         fields = '__all__'
+        widgets = {
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+                'rows': 4,  # Adjust the number of rows as needed
+            }),
+            'fecha': forms.DateInput(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+                'type': 'date',
+            }),
+            'tipo': forms.Select(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            }),
+        }
 
 class ParametrosForm(forms.ModelForm):
     class Meta:
@@ -725,7 +841,7 @@ class ParametrosForm(forms.ModelForm):
                 'class': 'form-control',
                 'style': 'max-width: 300px;',
                 'placeholder': 'Teléfono',
-            }),
+            })
         }
     def clean(self):
         cleaned_data = super().clean()
@@ -733,11 +849,89 @@ class ParametrosForm(forms.ModelForm):
         if Parametros.objects.filter(surcursal=surcursal).exists():
             raise forms.ValidationError("Ya existe parametro con esa surcursal.")
         return cleaned_data
+    
+    def clean_cai(self):
+        cai = self.cleaned_data.get('cai')
+        if not cai.isalnum() or len(cai) != 32:
+            raise forms.ValidationError("El CAI debe tener exactamente 32 caracteres alfanuméricos.")
+        return cai
+
+    def clean_rtn(self):
+        rtn = self.cleaned_data.get('rtn')
+        if not rtn.isdigit() or len(rtn) != 13:
+            raise forms.ValidationError("El RTN debe tener exactamente 13 dígitos.")
+        return rtn
+
+    def clean_razonSocial(self):
+        return self.validate_company_name(self.cleaned_data.get('razonSocial'))
+
+    def clean_nombreEmpresa(self):
+        return self.validate_company_name(self.cleaned_data.get('nombreEmpresa'))
+
+    def validate_company_name(self, name):
+        if not name:
+            raise forms.ValidationError("Este campo es obligatorio.")
+        if any(char.isdigit() for char in name):
+            raise forms.ValidationError("El nombre no debe contener números.")
+        return name
+
+    def clean_rangoAutorizadoInicial(self):
+        inicial = self.cleaned_data.get('rangoAutorizadoInicial')
+        if inicial <= 0:
+            raise forms.ValidationError("El rango autorizado inicial debe ser mayor que 0.")
+        return inicial
+
+    def clean_rangoAutorizadoFinal(self):
+        final = self.cleaned_data.get('rangoAutorizadoFinal')
+        inicial = self.cleaned_data.get('rangoAutorizadoInicial')
+        if final <= 0:
+            raise forms.ValidationError("El rango autorizado final debe ser mayor que 0.")
+        if final <= inicial:
+            raise forms.ValidationError("El rango autorizado final debe ser mayor que el inicial.")
+        return final
+
+    def clean_fechaLimiteEmision(self):
+        fecha = self.cleaned_data.get('fechaLimiteEmision')
+        if fecha <= timezone.now().date():
+            raise forms.ValidationError("La fecha límite de emisión debe ser posterior a hoy.")
+        return fecha
+    
+    def clean_correoElectronico(self):
+        correoElectronico = self.cleaned_data.get('correoElectronico')
+        instance = self.instance
+        if Pacientes.objects.filter(correoElectronico=correoElectronico).exclude(id=instance.id).exists():
+            raise ValidationError("Este correo electrónico ya está registrado.")
+        pattern = r"[^@]+@[^@]+\.[^@]+"
+        if not re.match(pattern, correoElectronico):
+            raise ValidationError("Correo electrónico inválido.")
+        pattern1 = r"[^@]+@[^@]+\.[a-zA-Z]{1,3}$"  # New pattern to match maximum of 3 letters after the .
+        if not re.match(pattern1, correoElectronico):
+            raise ValidationError("Correo electrónico inválido.")
+        parts = correoElectronico.split('@')[1].split('.')
+        if len(parts[0]) < 2 or len(parts[1]) < 2:
+            raise ValidationError("El correo electrónico debe tener al menos 2 caracteres después del @ y al menos 2 caracteres después del punto.")
+        return correoElectronico
+
+
+    def clean_telefono(self):
+        telefono = self.cleaned_data.get('telefono')
+        instance = self.instance
+        if Pacientes.objects.filter(telefono=telefono).exclude(id=instance.id).exists():
+            raise ValidationError("Este teléfono ya está registrado.")
+        if not telefono.isdigit():
+            raise ValidationError("El teléfono debe contener solo dígitos.")
+        if len(telefono) != 8:
+            raise ValidationError("El teléfono debe tener exactamente 8 dígitos.")
+        if telefono[0] not in ['2', '3', '8', '9']:
+            raise ValidationError("El teléfono debe comenzar con 22, 3, 8, o 9.")
+        return telefono
+
+    
 
 class ParametrosEditForm(forms.ModelForm):
     class Meta:
         model = Parametros
-        fields = '__all__'
+        fields = ['cai', 'rtn','razonSocial', 'nombreEmpresa','rangoAutorizadoInicial', 'rangoAutorizadoFinal','fechaLimiteEmision', 'correoElectronico','telefono']
         widgets = {
             'surcursal': forms.Select(attrs={
                 'class': 'form-control',
@@ -787,7 +981,7 @@ class ParametrosEditForm(forms.ModelForm):
                 'class': 'form-control',
                 'style': 'max-width: 300px;',
                 'placeholder': 'Teléfono',
-            }),
+            })
         }
 
     def clean(self):
@@ -798,3 +992,136 @@ class ParametrosEditForm(forms.ModelForm):
             if instance.surcursal != surcursal:
                 self.add_error('surcursal', "You cannot change the surcursal.")
         return cleaned_data
+    
+    def clean_cai(self):
+        cai = self.cleaned_data.get('cai')
+        if not cai.isalnum() or len(cai) != 32:
+            raise forms.ValidationError("El CAI debe tener exactamente 32 caracteres alfanuméricos.")
+        return cai
+
+    def clean_rtn(self):
+        rtn = self.cleaned_data.get('rtn')
+        if not rtn.isdigit() or len(rtn) != 13:
+            raise forms.ValidationError("El RTN debe tener exactamente 13 dígitos.")
+        return rtn
+
+    def clean_razonSocial(self):
+        return self.validate_company_name(self.cleaned_data.get('razonSocial'))
+
+    def clean_nombreEmpresa(self):
+        return self.validate_company_name(self.cleaned_data.get('nombreEmpresa'))
+
+    def validate_company_name(self, name):
+        if not name:
+            raise forms.ValidationError("Este campo es obligatorio.")
+        if any(char.isdigit() for char in name):
+            raise forms.ValidationError("El nombre no debe contener números.")
+        return name
+
+    def clean_rangoAutorizadoInicial(self):
+        inicial = self.cleaned_data.get('rangoAutorizadoInicial')
+        if inicial <= 0:
+            raise forms.ValidationError("El rango autorizado inicial debe ser mayor que 0.")
+        return inicial
+
+    def clean_rangoAutorizadoFinal(self):
+        final = self.cleaned_data.get('rangoAutorizadoFinal')
+        inicial = self.cleaned_data.get('rangoAutorizadoInicial')
+        if final <= 0:
+            raise forms.ValidationError("El rango autorizado final debe ser mayor que 0.")
+        if final <= inicial:
+            raise forms.ValidationError("El rango autorizado final debe ser mayor que el inicial.")
+        return final
+
+    def clean_fechaLimiteEmision(self):
+        fecha = self.cleaned_data.get('fechaLimiteEmision')
+        if fecha <= timezone.now().date():
+            raise forms.ValidationError("La fecha límite de emisión debe ser posterior a hoy.")
+        return fecha
+    
+    def clean_correoElectronico(self):
+        correoElectronico = self.cleaned_data.get('correoElectronico')
+        instance = self.instance
+        if Pacientes.objects.filter(correoElectronico=correoElectronico).exclude(id=instance.id).exists():
+            raise ValidationError("Este correo electrónico ya está registrado.")
+        pattern = r"[^@]+@[^@]+\.[^@]+"
+        if not re.match(pattern, correoElectronico):
+            raise ValidationError("Correo electrónico inválido.")
+        pattern1 = r"[^@]+@[^@]+\.[a-zA-Z]{1,3}$"  # New pattern to match maximum of 3 letters after the .
+        if not re.match(pattern1, correoElectronico):
+            raise ValidationError("Correo electrónico inválido.")
+        parts = correoElectronico.split('@')[1].split('.')
+        if len(parts[0]) < 2 or len(parts[1]) < 2:
+            raise ValidationError("El correo electrónico debe tener al menos 2 caracteres después del @ y al menos 2 caracteres después del punto.")
+        return correoElectronico
+
+
+    def clean_telefono(self):
+        telefono = self.cleaned_data.get('telefono')
+        instance = self.instance
+        if Pacientes.objects.filter(telefono=telefono).exclude(id=instance.id).exists():
+            raise ValidationError("Este teléfono ya está registrado.")
+        if not telefono.isdigit():
+            raise ValidationError("El teléfono debe contener solo dígitos.")
+        if len(telefono) != 8:
+            raise ValidationError("El teléfono debe tener exactamente 8 dígitos.")
+        if telefono[0] not in ['2', '3', '8', '9']:
+            raise ValidationError("El teléfono debe comenzar con 22, 3, 8, o 9.")
+        return telefono
+
+class   ISVForm(forms.ModelForm):
+    class Meta:
+        model =  ISV
+        fields = '__all__'
+        widgets = {
+            'impuesto': TextInput(attrs={
+                'class': "form-control",
+                'style': 'max-width: 300px;',
+                'placeholder': 'impuesto'
+            }),
+        }
+        
+
+    def clean_impuesto(self):
+        impuesto = self.cleaned_data.get('impuesto')
+        if impuesto is not None and impuesto <= 0:
+            raise forms.ValidationError("El impuesto no puede ser menor que 0.")
+        return impuesto
+
+
+class FacturaForm(forms.ModelForm):
+    class Meta:
+        model = Factura
+        fields =  ['descuento', 'rtn','metodoPago']
+        widgets = {
+                'rtn': forms.TextInput(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+                'placeholder': 'RTN',
+            }),
+                'descuento': TextInput(attrs={
+                'class': "form-control",
+                'style': 'max-width: 300px;',
+                'placeholder': 'Precio'
+            }),
+                'metodoPago': forms.Select(attrs={
+                'class': 'form-control',
+                'style': 'max-width: 300px;',
+            })
+            
+            }
+        
+    def clean_rtn(self):
+        rtn = self.cleaned_data.get('rtn')
+        if rtn and (not rtn.isdigit() or len(rtn) != 13):
+            raise forms.ValidationError("El RTN debe tener exactamente 13 dígitos.")
+        return rtn
+
+    def clean_descuento(self):
+        descuento = self.cleaned_data.get('descuento')
+        if descuento is not None and descuento < 0:
+            raise forms.ValidationError("El descuento no puede ser menor que 0.")
+        if descuento > 1:
+            raise forms.ValidationError("El descuento no puede ser mayor a 1.")
+        return descuento 
+    
