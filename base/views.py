@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.views import View
 from django.db.models import Max
 from django.forms import modelformset_factory
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 def loginPage(request):
 
@@ -49,20 +50,18 @@ def registrarSurcursal(request):
     direccion = request.POST['txtDireccion']
     correoElectronico = request.POST['txtCorreoElectronico']
     telefono = request.POST['txtTelefono']
-    personaEncargada= request.POST['txtPersonaEncargada']
     # Create Surcursales object with form data
     surcursal  = Surcursales.objects.create(
         nombre=nombre,
         direccion=direccion,
         correoElectronico=correoElectronico,
         telefono=telefono,
-        personaEncargada=personaEncargada
     )
 
     # Add a success message
     messages.success(request, '¡Sucursal registrado!')
 
-    return redirect('/')
+    return redirect('/tablas')
 @login_required(login_url="/login")
 def editarSurcursal(request, id):
     surcursales = Surcursales.objects.get(id=id)
@@ -82,14 +81,12 @@ def edicionSurcursal(request, id):
         direccion = request.POST['txtDireccion']
         correoElectronico = request.POST['txtCorreoElectronico']
         telefono = request.POST['txtTelefono']
-        personaEncargada = request.POST['txtPersonaEncargada']
 
         # Update Surcursales object fields
         surcursales.nombre = nombre
         surcursales.direccion = direccion
         surcursales.correoElectronico = correoElectronico
         surcursales.telefono = telefono
-        surcursales.personaEncargada = personaEncargada
         
         # Save the updated object
         surcursales.save()
@@ -98,7 +95,7 @@ def edicionSurcursal(request, id):
         messages.success(request, '¡Surcursal actualizado!')
 
         # Redirect to a relevant URL
-        return redirect('/')
+        return redirect('/tablas')
 
     return render(request, 'your_template.html', {'surcursales': surcursales})
 
@@ -109,11 +106,31 @@ def eliminarSurcursal(request, id):
 
     messages.success(request, '¡Surcursal eliminado!')
 
-    return redirect('/')
+    return redirect('/tablas')
 @login_required(login_url="/login")
 def tablaproveedores(request):
-    proveedores = Proveedores.objects.all()
-    return render(request, 'base/tablaProveedores.html',{"proveedores":proveedores})
+    # Get all proveedores
+    proveedores_list = Proveedores.objects.all()
+
+    # Search functionality
+    search_query = request.GET.get('q')
+    if search_query:
+        proveedores_list = proveedores_list.filter(nombre__icontains=search_query)
+
+    # Pagination
+    paginator = Paginator(proveedores_list, 10)  # Show 10 proveedores per page
+    page_number = request.GET.get('page')
+    try:
+        proveedores = paginator.page(page_number)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        proveedores = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        proveedores = paginator.page(paginator.num_pages)
+
+    return render(request, 'base/tablaProveedores.html', {"proveedores": proveedores})
+
 @login_required(login_url="/login")
 def agregarproveedores(request):
     return render(request, 'base/agregarProveedores.html')
@@ -125,23 +142,27 @@ def registrarproveedores(request):
         direccion = request.POST['txtDireccion']
         correoElectronico = request.POST['txtCorreoElectronico']
         telefono = request.POST['txtTelefono']
+        personaEncargada = request.POST['txtPersonaEncargada']
+
 
         # Create Proveedores object with form data
         proveedor = Proveedores.objects.create(
             nombre=nombre,
             direccion=direccion,
             correoElectronico=correoElectronico,
-            telefono=telefono
+            telefono=telefono,
+            personaEncargada = personaEncargada
+
         )
 
         # Add a success message
         messages.success(request, '¡Proveedor registrado!')
 
-        return redirect('/')
+        return redirect('/tablaProveedores')
     else:
         # Handle GET requests or other cases
         # You can return a response for other request methods or handle them accordingly
-        return redirect('/')  # Redirect to home page or render a specific template
+        return redirect('/tablaProveedores')  # Redirect to home page or render a specific template
  
 @login_required(login_url="/login")
 def editarproveedores(request, id):
@@ -159,13 +180,15 @@ def edicionproveedores(request, id):
         direccion = request.POST['txtDireccion']
         correoElectronico = request.POST['txtCorreoElectronico']
         telefono = request.POST['txtTelefono']
+        personaEncargada = request.POST['txtPersonaEncargada']
+
 
         # Update Surcursales object fields
         proveedores.nombre = nombre
         proveedores.direccion = direccion
         proveedores.correoElectronico = correoElectronico
         proveedores.telefono = telefono
-        
+        proveedores.personaEncargada = personaEncargada
         # Save the updated object
         proveedores.save()
 
@@ -173,7 +196,7 @@ def edicionproveedores(request, id):
         messages.success(request, '¡Proveedor actualizado!')
 
         # Redirect to a relevant URL
-        return redirect('/')
+        return redirect('/tablaProveedores')
 
     return render(request, 'your_template.html', {'proveedores': proveedores})
 
@@ -185,7 +208,24 @@ def tablapreciohmedicamento(request):
     return render(request, 'base/tablapreciohmedicamento.html', {"preciohmedicamento": preciohmedicamento})
 @login_required(login_url="/login")
 def tablamedicamentos(request):
-    medicamentos = Medicamentos.objects.all()
+    medicamentos_list = Medicamentos.objects.all()
+    
+    # Search functionality
+    search_query = request.GET.get('q')
+    if search_query:
+        medicamentos_list = medicamentos_list.filter(nombre__icontains=search_query)
+    
+    # Pagination
+    paginator = Paginator(medicamentos_list, 10)  # Show 10 items per page
+    page = request.GET.get('page')
+    try:
+        medicamentos = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        medicamentos = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        medicamentos = paginator.page(paginator.num_pages)
     
     context = {
         'medicamentos': medicamentos,
@@ -213,7 +253,7 @@ def agregarmedicamentos(request):
             medicamento.save()  # Save medicamento with updated precio
             
             messages.success(request, '¡Medicamento agregado!')
-            return redirect('/')  # Redirect to a success page
+            return redirect('/tablamedicamentos')  # Redirect to a success page
     else:
         medicamentos_form = MedicamentosForm()
         preciohmedicamentos_form = PrecioHMedicamentoForm()
@@ -231,7 +271,7 @@ def editarmedicamentos(request, id):
             medicamentos.precio = preciohmedicamentos  # Associate the document with the employee
             medicamentos.save()
             messages.success(request, '¡Medicamento agregado!')
-            return redirect('/')  # Redirect to a success page
+            return redirect('/tablamedicamentos')  # Redirect to a success page
     else:
         medicamentos_form = MedicamentosForm()
         preciohmedicamentos_form = PrecioHMedicamentoForm()
@@ -246,7 +286,7 @@ def eliminarmedicamentos(request, id):
 
     messages.success(request, '¡Medicamentos eliminado!')
 
-    return redirect('/')
+    return redirect('/tablamedicamentos')
 
 
 
@@ -263,7 +303,7 @@ def agregarecmedicamentos(request):
             messages.success(request, '¡Estado Compra Medicamento agregado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablaecmedicamentos') 
     else:
         form = ECMedicamentosForm()
     context = {'form': form}
@@ -296,7 +336,7 @@ def edicionecmedicamentos(request, id):
         messages.success(request, '¡Estado de compra de medicamento actualizado!')
 
         # Redirect to a relevant URL
-        return redirect('/')
+        return redirect('/tablaecmedicamentos')
 
     render(request, 'your_template.html', {'ecmedicamentos': ecmedicamentos})
 
@@ -307,23 +347,78 @@ def eliminarecmedicamentos(request, id):
 
     messages.success(request, '¡Estado de compra de medicamentos eliminado!')
 
-    return redirect('/')
+    return redirect('/tablaecmedicamentos')
 
 
-@login_required(login_url="/login")
 def tablaInventarioMedicamento(request):
-    inventarioMedicamento = InventarioMedicamento.objects.all()
+    inventarioMedicamento_list = InventarioMedicamento.objects.all()
+    
+    # Search functionality
+    search_query = request.GET.get('q')
+    if search_query:
+        inventarioMedicamento_list = inventarioMedicamento_list.filter(medicamento__nombre__icontains=search_query)
+    
+    # Pagination
+    paginator = Paginator(inventarioMedicamento_list, 10)  # Show 10 items per page
+    page = request.GET.get('page')
+    try:
+        inventarioMedicamento = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        inventarioMedicamento = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        inventarioMedicamento = paginator.page(paginator.num_pages)
+    
     return render(request, 'base/tablaInventarioMedicamento.html', {"inventarioMedicamento": inventarioMedicamento})
 
 @login_required(login_url="/login")
 def tablalotemedicamento(request):
-    lotemedicamento = LoteMedicamento.objects.all()
-    return render(request, 'base/tablalotemedicamento.html', {"lotemedicamento": lotemedicamento})
+    lotemedicamento_list = LoteMedicamento.objects.all()
+    
+    # Search functionality
+    search_query = request.GET.get('q')
+    if search_query:
+        lotemedicamento_list = lotemedicamento_list.filter(medicamento__nombre__icontains=search_query)
+    
+    # Pagination
+    paginator = Paginator(lotemedicamento_list, 10)  # Show 10 items per page
+    page = request.GET.get('page')
+    try:
+        lotemedicamento = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        lotemedicamento = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        lotemedicamento = paginator.page(paginator.num_pages)
+    
+    return render(request, 'base/tablalotemedicamento.html', {"lotemedicamento": lotemedicamento})  
 
-@login_required(login_url="/login")
 def tablacompra(request):
-    compra = CompraMedicamento.objects.all()
-    return render(request, 'base/tablacompra.html', {"compra": compra})
+    compras = CompraMedicamento.objects.all()
+    search_query = request.GET.get('q')
+
+    # Filter the data based on the search query
+    if search_query:
+        compras = compras.filter(
+            proveedor__nombre__icontains=search_query
+        )
+
+    # Pagination
+    paginator = Paginator(compras, 10)  # Show 10 items per page
+    page_number = request.GET.get('page')
+    try:
+        compras = paginator.page(page_number)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        compras = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        compras = paginator.page(paginator.num_pages)
+
+    # Render the template with the paginated data
+    return render(request, 'base/tablacompra.html', {'compras': compras})
 
 @login_required(login_url="/login")
 def compraMedicamento(request):
@@ -337,7 +432,7 @@ def compraMedicamento(request):
             formset.instance = medicamento  # Assign the instance to each form in the formset
             formset.save()  # Save the DetallePrescripciones instances, now associated with prescripcion
             messages.success(request, 'Compra guardada con éxito!')
-            return redirect('/')  # Replace '/' with the URL you want to redirect to
+            return redirect('/tablacompra')  # Replace '/' with the URL you want to redirect to
     else:
         form = CompraMedicamentoForm()
         formset = LoteCompraFormSet()
@@ -355,11 +450,11 @@ def editarcompramedicamento(request, compra_id):
 
     if compra.estadoCompra.id == 9:
         messages.success(request, 'Esta compra ha sido cancelada y no puede modificarse.')
-        return redirect('/')
+        return redirect('/tablacompra')
 
     if compra.estadoCompra.id == 8:
         messages.success(request, 'Esta compra ha sido aprobada y no puede modificarse.')
-        return redirect('/')  # Redirect to a different page, e.g., dashboard
+        return redirect('/tablacompra')  # Redirect to a different page, e.g., dashboard
     
     LoteCompraFormSet = inlineformset_factory(CompraMedicamento, LoteMedicamento,
                                               form=LoteForm, extra=0, can_delete=True)
@@ -371,7 +466,7 @@ def editarcompramedicamento(request, compra_id):
             form.save()
             formset.save()
             messages.success(request, 'Compra actualizada con éxito!')
-            return redirect('/')
+            return redirect('/tablacompra')
     else:
         form = EditCompraMedicamentoForm(instance=compra)
         formset = LoteCompraFormSet(instance=compra)
@@ -411,7 +506,7 @@ def agregarmetodospago(request):
             messages.success(request, '¡Metodo de pago agregado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablametodospago') 
     else:
         form = MetodosPagoForm()
     context = {'form': form}
@@ -430,7 +525,7 @@ def agregartipodocumento(request):
             messages.success(request, '¡Tipo Documento agregado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tipodocumento') 
     else:
         form = TipoDocumentoForm()
     context = {'form': form}
@@ -450,7 +545,7 @@ def agregarcargo(request):
             messages.success(request, '¡Cargo agregado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablacargos') 
     else:
         form = CargosForm()
     context = {'form': form}
@@ -465,7 +560,7 @@ def editarcargo(request,pk):
             messages.success(request, '¡Cargo agregado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablacargos') 
     else:
         form = CargosForm(instance=cargo)
     context = {'form': form}
@@ -475,7 +570,28 @@ def editarcargo(request,pk):
 @login_required(login_url="/login")
 def tablaempleados(request):
     empleados = Empleados.objects.all()
-    return render(request, 'base/tablaempleados.html',{"empleados":empleados})
+    search_query = request.GET.get('q')
+
+    # Filter the data based on the search query
+    if search_query:
+        empleados = empleados.filter(
+            nombre__icontains=search_query
+        )
+
+    # Paginate the data
+    paginator = Paginator(empleados, 10)  # Show 10 empleados per page
+    page_number = request.GET.get('page')
+    try:
+        empleados = paginator.page(page_number)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        empleados = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        empleados = paginator.page(paginator.num_pages)
+
+    # Render the template with the paginated and filtered data
+    return render(request, 'base/tablaempleados.html', {"empleados": empleados, "search_query": search_query})
 
 @login_required(login_url="/login")
 def agregarempleados(request):
@@ -489,7 +605,7 @@ def agregarempleados(request):
             empleado.documento = documento  # Associate the document with the employee
             empleado.save()
             messages.success(request, '¡Empleado agregado!')#
-            return redirect('/')  # Redirect to a success page
+            return redirect('/tablaempleados')  # Redirect to a success page
     else:
         empleado_form = EmpleadosForm()
         documento_form = DocumentoForm()
@@ -509,7 +625,7 @@ def editarempleados(request, pk):
             empleado.documento = documento  # Associate the document with the employee
             empleado.save()
             messages.success(request, '¡Empleado agregado!')#
-            return redirect('/')  # Redirect to a success page
+            return redirect('/tablaempleados')  # Redirect to a success page
     else:
         empleado_form = EmpleadosForm(instance=empleados)
         documento_form = DocumentoForm(instance=documentos)
@@ -523,7 +639,7 @@ def eliminarempleados(request, pk):
 
     messages.success(request, '¡Empleado eliminado!')
 
-    return redirect('/')
+    return redirect('/tablaempleados')
 
 @login_required(login_url="/login")
 def tablatiposalas(request):
@@ -538,7 +654,7 @@ def agregartiposala(request):
             messages.success(request, '¡Tipo Sala agregado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablatiposalas') 
     else:
         form = TipoSalasForm()
     context = {'form': form}
@@ -553,7 +669,7 @@ def editartiposala(request, pk):
             messages.success(request, '¡Tipo Sala actualizado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablatiposalas') 
     else:
         form = TipoSalasForm(instance=tiposala)
     context = {'form': form}
@@ -572,7 +688,7 @@ def agregarsala(request):
             messages.success(request, '¡Sala agregado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablasalas') 
     else:
         form = SalasForm()
     context = {'form': form}
@@ -588,7 +704,7 @@ def editarsala(request, pk):
             messages.success(request, '¡Sala actualizado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablasalas') 
     else:
         form = SalasForm(instance=sala)
     context = {'form': form}
@@ -601,8 +717,27 @@ def tabladocumento(request):
 
 @login_required(login_url="/login")
 def tablapacientes(request):
-    pacientes = Pacientes.objects.all()
-    return render(request, 'base/tablapacientes.html',{"pacientes":pacientes})
+    # Get all patients
+    pacientes_list = Pacientes.objects.all()
+
+    # Search functionality
+    search_query = request.GET.get('q')
+    if search_query:
+        pacientes_list = pacientes_list.filter(nombre__icontains=search_query)
+
+    # Pagination
+    paginator = Paginator(pacientes_list, 10)  # Show 10 patients per page
+    page_number = request.GET.get('page')
+    try:
+        pacientes = paginator.page(page_number)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        pacientes = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        pacientes = paginator.page(paginator.num_pages)
+
+    return render(request, 'base/tablapacientes.html', {"pacientes": pacientes})
 
 @login_required(login_url="/login")
 def agregarpaciente(request):
@@ -616,7 +751,7 @@ def agregarpaciente(request):
             pacientes.documento = documento  # Associate the document with the employee
             pacientes.save()
             messages.success(request, '¡Paciente agregado!')#
-            return redirect('/')  # Redirect to a success page
+            return redirect('/tablapacientes')  # Redirect to a success page
     else:
         pacientes_form = PacientesForm()
         documento_form = DocumentoForm()
@@ -636,7 +771,7 @@ def editarpaciente(request, pk):
             pacientes.documento = documento  # Associate the document with the employee
             pacientes.save()
             messages.success(request, '¡Paciente actualizado!')#
-            return redirect('/')  # Redirect to a success page
+            return redirect('/tablapacientes')  # Redirect to a success page
     else:
         pacientes_form = PacientesForm(instance=pacientes)
         documento_form = DocumentoForm(instance=documentos)
@@ -644,7 +779,28 @@ def editarpaciente(request, pk):
 
 def tablacitas(request):
     citas = Citas.objects.all()
-    return render(request, 'base/tablacitas.html',{"citas":citas})
+    search_query = request.GET.get('q')
+
+    # Filter the data based on the search query
+    if search_query:
+        citas = citas.filter(
+            paciente__nombre__icontains=search_query
+        )
+
+    # Paginate the data
+    paginator = Paginator(citas, 10)  # Show 10 citas per page
+    page_number = request.GET.get('page')
+    try:
+        citas = paginator.page(page_number)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        citas = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        citas = paginator.page(paginator.num_pages)
+
+    # Render the template with the paginated and filtered data
+    return render(request, 'base/tablacitas.html', {"citas": citas, "search_query": search_query})
 
 @login_required(login_url="/login")
 def agregarcita(request):
@@ -654,7 +810,7 @@ def agregarcita(request):
             messages.success(request, '¡Cita agregada!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablacitas') 
     else:
         form = CitasForm()
     context = {'form': form}
@@ -670,7 +826,7 @@ def editarcita(request, pk):
             messages.success(request, '¡Cita actualizada!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablacitas') 
     else:
         form = CitasForm(instance=cita)
     context = {'form': form}
@@ -689,7 +845,7 @@ def eliminarcita(request, id):
     except Citas.DoesNotExist:
         messages.success(request, 'La cita no existe.')
 
-    return redirect('/')
+    return redirect('/tablacitas')
 
 
 
@@ -712,7 +868,7 @@ def agregarprescripcion(request):
             formset.instance = prescripcion  # Assign the instance to each form in the formset
             formset.save()  # Save the DetallePrescripciones instances, now associated with prescripcion
             messages.success(request, 'Prescripcion guardada con éxito!')
-            return redirect('/')  # Replace '/' with the URL you want to redirect to
+            return redirect('/tablaprescripciones')  # Replace '/' with the URL you want to redirect to
     else:
         form = PrescripcionesForm()
         formset = DetallePrescripcionesFormSet()
@@ -729,7 +885,7 @@ def editarmedicamento(request, medicamento_id):
         if medicamentos_form.is_valid():
             medicamentos_form.save()
             messages.success(request, '¡Medicamento actualizado!')
-            return redirect('/')  # Redirect to a success page
+            return redirect('/tablaprescripciones')  # Redirect to a success page
     else:
         medicamentos_form = MedicamentosForm(instance=medicamento)
 
@@ -760,7 +916,7 @@ def editarpreciomedicamento(request, pk):
             medicamento.save()
 
             messages.success(request, '¡Nuevo precio del medicamento registrado y actualizado!')
-            return redirect('/')  # Redirect to a success page
+            return redirect('/tablamedicamentos')  # Redirect to a success page
     else:
         preciomedicamento_form = PrecioHMedicamentoForm(instance=finalprecio)
 
@@ -768,8 +924,29 @@ def editarpreciomedicamento(request, pk):
 
 @login_required(login_url="/login")
 def tablaordenesmedicas(request):
-    ordenesmedicas = OrdenesMedicas.objects.all()
-    return render(request, 'base/tablaordenesmedicas.html',{"ordenesmedicas":ordenesmedicas})
+    ordenesmedicas_list = OrdenesMedicas.objects.all()
+    
+    # Search functionality
+    search_query = request.GET.get('q')
+    if search_query:
+        ordenesmedicas_list = ordenesmedicas_list.filter(cita__paciente__nombre__icontains=search_query)  # Replace field_to_search with the field you want to search
+    
+    # Pagination
+    paginator = Paginator(ordenesmedicas_list, 10)  # Show 10 items per page
+    page = request.GET.get('page')
+    try:
+        ordenesmedicas = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        ordenesmedicas = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        ordenesmedicas = paginator.page(paginator.num_pages)
+    
+    context = {
+        'ordenesmedicas': ordenesmedicas,
+    }
+    return render(request, 'base/tablaordenesmedicas.html', context)
 
 @login_required(login_url="/login")
 def agregarordenmedica(request):
@@ -779,7 +956,7 @@ def agregarordenmedica(request):
             messages.success(request, '¡Orden Medica agregada!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablaordenesmedicas') 
     else:
         form = OrdenesMedicasForm()
     context = {'form': form}
@@ -795,7 +972,7 @@ def editarordenmedica(request, pk):
             messages.success(request, '¡Orden Medica actualizada!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablaordenesmedicas') 
     else:
         form = OrdenesMedicasForm(instance=ordenesmedicas)
     context = {'form': form}
@@ -804,7 +981,18 @@ def editarordenmedica(request, pk):
 @login_required(login_url="/login")
 def tablahistorialclinico(request):
     historialclinico = HistorialClinico.objects.all()
-    return render(request, 'base/tablahistorialclinico.html',{"historialclinico":historialclinico})
+
+    # Handling search functionality
+    search_query = request.GET.get('q')
+    if search_query:
+        historialclinico = historialclinico.filter(nombre__icontains=search_query)
+
+    # Pagination
+    paginator = Paginator(historialclinico, 10)  # Show 10 items per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'base/tablahistorialclinico.html', {"page_obj": page_obj})
 
 
 @login_required(login_url="/login")
@@ -850,7 +1038,7 @@ def agregarqueja(request):
             messages.success(request, '¡Queja/Sugerencia agregado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablaquejas') 
     else:
         form = QuejasYSugerenciasForm()
     context = {'form': form}
@@ -869,7 +1057,7 @@ def agregarparametros(request):
             messages.success(request, '¡Parametros agregado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablaparametros') 
     else:
         form = ParametrosForm()
     context = {'form': form}
@@ -888,7 +1076,7 @@ def editarparametros(request, pk):
             form.save()
             
             messages.success(request, '¡Parámetros actualizados!')
-            return redirect('/')
+            return redirect('/tablaparametros')
     else:
         # Populate the form with the existing instance data
         form = ParametrosEditForm(instance=parametros)
@@ -902,72 +1090,86 @@ def editarparametros(request, pk):
 
 @login_required(login_url="/login")
 def factura(request, pk):
+    cita = get_object_or_404(Citas, pk=pk)
+    parametros = Parametros.objects.filter(surcursal=cita.surcursal).first()  # Assumes only one matching Parametros
+
+    if parametros.next_invoice_number == parametros.rangoAutorizadoFinal:
+        messages.success(request, 'Se ha llegado al rangoAutorizadoFinal.')
+        return redirect('/tablafacturas')
     # Retrieve the specific Cita based on primary key
     
 
-    cita = get_object_or_404(Citas, pk=pk)
+    
 
     if Factura.objects.filter(id=cita).exists():
         messages.success(request, 'Factura ya creada.')
-        return redirect('/')
+        return redirect('/tablafacturas')
     
 
     
     
     isv = get_object_or_404(ISV, pk=1)
-    subtotal=0 
-    # Retrieve all Prescripciones linked to this specific Cita
-    prescripciones = Prescripciones.objects.filter(cita=cita)
-    # Fetch the Parametros associated with the Surcursal of the Cita
-    parametros = Parametros.objects.filter(surcursal=cita.surcursal).first()  # Assumes only one matching Parametros
-
-    if parametros.next_invoice_number == parametros.rangoAutorizadoFinal:
-        messages.success(request, 'Se ha llegado al rangoAutorizadoFinal.')
-        return redirect('/')
-
-    for prescripcion in prescripciones:
-        detalles_prescripciones = DetallePrescripciones.objects.filter(prescripcion=prescripcion)
-        for detalle in detalles_prescripciones:
-            inventario_medicamento = InventarioMedicamento.objects.filter(medicamento=detalle.medicamento).first()
-            lotes = LoteMedicamento.objects.filter(medicamento=detalle.medicamento).order_by('fechaVencimiento')
-            cantidad= detalle.cantidad
-            if inventario_medicamento.stock - detalle.cantidad <= 0:
-                subtotal += 0
-                messages.warning(request, f"{detalle.medicamento.nombre} no tiene stock suficiente.")
-            else:
-
-                subtotal = subtotal + (detalle.medicamento.precio*cantidad)
-            
-                inventario_medicamento.stock -= detalle.cantidad
-                inventario_medicamento.save()
-                for lote in lotes:
-                    if cantidad < lote.cantidad:
-                        lote.cantidad -= cantidad
-                        lote.save()
-                        break
-                    else:
-                        cantidad -= lote.cantidad
-                        lote.cantidad=0
-                        lote.save()
-                    
-
-                
-                
-        
-    subtotal= subtotal + cita.tipocita.precio
-
-    total= subtotal*isv.impuesto
-    total= total+subtotal 
     
-   
-
-        # Increment the invoice number in Parametros for the next use
-    parametros.next_invoice_number += 1
-    parametros.save()
 
     if request.method == 'POST':
+        
         form = FacturaForm(request.POST)
         if form.is_valid():
+            subtotal=0 
+    # Retrieve all Prescripciones linked to this specific Cita
+            prescripciones = Prescripciones.objects.filter(cita=cita)
+            # Fetch the Parametros associated with the Surcursal of the Cita
+            
+
+            for prescripcion in prescripciones:
+
+                detalles_prescripciones = DetallePrescripciones.objects.filter(prescripcion=prescripcion)
+                for detalle in detalles_prescripciones:
+                    inventario_medicamento = InventarioMedicamento.objects.filter(medicamento=detalle.medicamento).first()
+                    lotes = LoteMedicamento.objects.filter(medicamento=detalle.medicamento).order_by('fechaVencimiento')
+                    cantidad= detalle.cantidad
+                    if inventario_medicamento.stock - detalle.cantidad < 0:
+                        subtotal += 0
+                        messages.warning(request, f"{detalle.medicamento.nombre} no tiene stock suficiente.")
+                    else:
+
+
+                        subtotal = subtotal + (detalle.medicamento.precio*cantidad)
+                    
+                        inventario_medicamento.stock -= detalle.cantidad
+                        inventario_medicamento.save()
+                        new_detalle_factura = DetalleFactura(
+                            cita=cita,
+                            detallePrescripcion=detalle
+                        )
+                        new_detalle_factura.save()
+                        
+
+
+                        for lote in lotes:
+                            if cantidad < lote.cantidad:
+                                lote.cantidad -= cantidad
+                                lote.save()
+                                break
+                            else:
+                                cantidad -= lote.cantidad
+                                lote.cantidad=0
+                                lote.save()
+                            
+
+                        
+                        
+                
+            subtotal= subtotal + cita.tipocita.precio
+
+            total= subtotal*isv.impuesto
+            total= total+subtotal 
+            
+        
+
+                # Increment the invoice number in Parametros for the next use
+            parametros.next_invoice_number += 1
+            parametros.save()
             rtn = form.cleaned_data['rtn']
             descuento = form.cleaned_data['descuento']
             metodoPago = form.cleaned_data['metodoPago']
@@ -985,7 +1187,7 @@ def factura(request, pk):
                 metodoPago= metodoPago
             )
             new_factura.save()
-            return redirect('/') 
+            return redirect('/tablafacturas') 
 
             
     else:
@@ -997,25 +1199,6 @@ def factura(request, pk):
     # Render the response with the collected data in the factura.html template
     return render(request, 'base/factura.html', context)
 
-#@login_required(login_url="/login")
-#def tablafactura(request, pk):
- #   prescripciones = Prescripciones.objects.filter(cita=cita)
-    
-    # Initialize an empty list to store the DetallePrescripcion objects
-  #  Costos = []
-
-    # Loop through each Prescripcion and get related DetallePrescripcion
-   # for prescripcion in prescripciones:
-    #    detallesPrescripciones = DetallePrescripciones.objects.filter(prescripcion=prescripcion)
-        # Using extend to add all items from the queryset to the list
-     #   Costos.extend(detallesPrescripciones)
-    #context = {
-     #   'cita': cita,
-      #  'parametros': parametros,
-       # }
-
-    # Render the response with the collected data in the factura.html template
-    #return render(request, 'base/factura.html', context)
 
 @login_required(login_url="/login")
 def tablatipocitas(request):
@@ -1031,7 +1214,7 @@ def agregartipocita(request):
             messages.success(request, '¡Tipo de Cita agregado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablatipocitas') 
     else:
         form = TipoCitasForm()
     context = {'form': form}
@@ -1039,14 +1222,14 @@ def agregartipocita(request):
 
 @login_required(login_url="/login")
 def editartipocita(request,pk):
-    tipocita = get_object_or_404(Citas, pk=pk)
+    tipocita = get_object_or_404(TipoCitas, pk=pk)
     if request.method == 'POST':
         form = TipoCitasForm(request.POST, instance=tipocita)
         if form.is_valid():
             messages.success(request, '¡Tipo de Cita agregado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablatipocitas') 
     else:
         form = TipoCitasForm(instance=tipocita)
     context = {'form': form}
@@ -1066,7 +1249,7 @@ def isv(request,pk):
             messages.success(request, '¡ISV actualizado!')#
             
             form.save()  # Save the form data to the database
-            return redirect('/') 
+            return redirect('/tablaisv') 
     else:
         form = ISVForm(instance=isv)
     context = {'form': form}
@@ -1075,8 +1258,29 @@ def isv(request,pk):
 
 @login_required(login_url="/login")
 def tablafacturas(request):
-    facturas = Factura.objects.all()
-    return render(request, 'base/tablafacturas.html',{"facturas":facturas})
+    facturas_list = Factura.objects.all()
+
+    # Get the search query from the request
+    search_query = request.GET.get('q')
+
+    # If there's a search query, filter the facturas based on it
+    if search_query:
+        facturas_list = facturas_list.filter(paciente__nombre__icontains=search_query)
+
+    # Paginate the filtered facturas list
+    paginator = Paginator(facturas_list, 10)  # Show 10 facturas per page
+    page_number = request.GET.get('page')
+
+    try:
+        facturas = paginator.page(page_number)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        facturas = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        facturas = paginator.page(paginator.num_pages)
+
+    return render(request, 'base/tablafacturas.html', {"facturas": facturas})
 
 @login_required(login_url="/login")
 def facturas(request,pk):

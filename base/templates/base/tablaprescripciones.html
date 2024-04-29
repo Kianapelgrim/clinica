@@ -15,7 +15,7 @@
                                 <!-- Content for the first column -->
                             </div>
                             <div class="col">
-                                <h1 class="h3 mb-2 text-gray-800">Prescripciones de {{ paciente.nombre }}</h1>
+                                <h1 class="h3 mb-2 text-gray-800">Prescripciones </h1>
                                 <!-- Content for the second column -->
                             </div>
                             <div class="col">
@@ -54,7 +54,6 @@
                                             <td>{{s.indicaciones}}</td>
                                             <td>{{s.cita.paciente.nombre}}</td>
                                             <td>{{s.fecha}}</td>
-                                            <td><a href="editarprescripcion/{{s.id}}" class="btn btn-info">Editar</a></td>
                                         </tr>
                                         {% endfor %}
                                         

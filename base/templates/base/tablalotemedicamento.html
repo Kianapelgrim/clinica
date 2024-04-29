@@ -25,6 +25,16 @@
                         </div>
                     </div>
                     
+                    <div class="container mt-3">
+                        <form action="" method="GET">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Buscar..." name="q">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="submit">Buscar</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                     
 
                     <!-- DataTales Example -->
@@ -60,6 +70,27 @@
                                     </tbody>
                                 </table>
                             </div>
+
+
+                            <div class="pagination">
+                                <span class="step-links">
+                                    {% if lotemedicamento.has_previous %}
+                                        <a href="?page=1">&laquo; first</a>
+                                        <a href="?page={{ lotemedicamento.previous_page_number }}">previous</a>
+                                    {% endif %}
+                            
+                                    <span class="current">
+                                        Page {{ lotemedicamento.number }} of {{ lotemedicamento.paginator.num_pages }}.
+                                    </span>
+                            
+                                    {% if lotemedicamento.has_next %}
+                                        <a href="?page={{ lotemedicamento.next_page_number }}">next</a>
+                                        <a href="?page={{ lotemedicamento.paginator.num_pages }}">last &raquo;</a>
+                                    {% endif %}
+                                </span>
+                            </div>
+
+
                         </div>
                     </div>
 

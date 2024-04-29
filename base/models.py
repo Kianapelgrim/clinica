@@ -19,9 +19,8 @@ class Surcursales(models.Model):
     id = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=255)
     direccion = models.TextField()
-    correoElectronico = models.EmailField(unique=True)
+    correoElectronico = models.EmailField()
     telefono = models.CharField(max_length=20)
-    personaEncargada= models.CharField(max_length = 255, null = True)
 
     def clean(self):
         super().clean()
@@ -43,7 +42,7 @@ class Proveedores(models.Model):
     direccion = models.TextField()
     correoElectronico = models.EmailField(unique=True)
     telefono = models.CharField(max_length=20)
-    personaEncargada= models.CharField(max_length = 255, null = True)
+    personaEncargada= models.CharField(max_length = 255)
 
     def clean(self):
         super().clean()
@@ -289,7 +288,7 @@ class DetallePrescripciones(models.Model):
 
 class OrdenesMedicas(models.Model):
     id = models.AutoField(primary_key=True)
-    indicaciones = models.TextField(blank=True)
+    indicaciones = models.TextField()
     fecha = models.DateField(auto_now_add=True)
     cita=models.ForeignKey('Citas',on_delete = models.SET_NULL, null = True)
     
@@ -370,19 +369,8 @@ class QuejasYSugerencias(models.Model):
     def __str__(self):
         return f"{self.tipo} - {self.fecha}"
     
-@receiver(post_save, sender=Factura)
-def create_detalle_factura(sender, instance, created, **kwargs):
-    if created:
-        cita = instance.id
-        prescripciones = Prescripciones.objects.filter(cita=cita)
-        for prescripcion in prescripciones:
-            detalles_prescripciones = DetallePrescripciones.objects.filter(prescripcion=prescripcion)
-            for detalle in detalles_prescripciones:
-                new_detalle_factura = DetalleFactura(
-                    cita=cita,
-                    detallePrescripcion=detalle
-                )
-                new_detalle_factura.save()
+
+                
 
 @receiver(post_save, sender=CompraMedicamento)
 def update_inventory(sender, instance, created, **kwargs):
@@ -393,6 +381,13 @@ def update_inventory(sender, instance, created, **kwargs):
             inventario, created = InventarioMedicamento.objects.get_or_create(medicamento=lote.medicamento)
             inventario.stock += lote.cantidad
             inventario.save()
+
+
+@receiver(post_save, sender=CompraMedicamento)
+def update_inventory(sender, instance, created, **kwargs):
+    if instance.estadoCompra.id == 9:
+        logger.debug(f"Deleting lotes for CompraMedicamento with id {instance.id}")
+        LoteMedicamento.objects.filter(compra=instance).delete()
 
 @receiver(pre_save, sender=Parametros)
 def reset_invoice_number(sender, instance, **kwargs):

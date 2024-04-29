@@ -24,6 +24,17 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="container mt-3">
+                        <form action="" method="GET">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Buscar..." name="q">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="submit">Buscar</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                     
                     
 
@@ -45,31 +56,50 @@
                                             <th>Fecha de Recibido</th>
                                             <th>Estado de Compra</th>
                                             <th>Precio Total</th>
-                                         
-                                            
                                         </tr>
                                     </thead>
-                                  
                                     <tbody>
-                                        {% for s in compra%}
+                                        {% for compra in compras %}
                                         <tr>
-                                            <td>{{s.id}}</td>
-                                            <td>{{s.proveedor.nombre}}</td>
-                                            <td>{{s.numeroFactura}}</td>
-                                            <td>{{s.fechaPedido}}</td>
-                                            <td>{{s.fechaDespacho}}</td>
-                                            <td>{{s.fechaRecibido}}</td>
-                                            <td>{{s.estadoCompra.nombre}}</td>
-                                            <td>{{s.precioTotal}}</td>
-                                            
-                                        
-                                            <td><a href="editarcompramedicamento/{{s.id}}" class="btn btn-info">Editar</a></td>
+                                            <td>{{ compra.id }}</td>
+                                            <td>{{ compra.proveedor.nombre }}</td>
+                                            <td>{{ compra.numeroFactura }}</td>
+                                            <td>{{ compra.fechaPedido }}</td>
+                                            <td>{{ compra.fechaDespacho }}</td>
+                                            <td>{{ compra.fechaRecibido }}</td>
+                                            <td>{{ compra.estadoCompra.nombre }}</td>
+                                            <td>{{ compra.precioTotal }}</td>
+                                            <td><a href="editarcompramedicamento/{{ compra.id }}" class="btn btn-info">Editar</a></td>
                                         </tr>
                                         {% endfor %}
-                                        
                                     </tbody>
                                 </table>
                             </div>
+
+
+
+                            <div class="pagination">
+                                <span class="step-links">
+                                    {% if compras.has_previous %}
+                                        <a href="?page=1">&laquo; first</a>
+                                        <a href="?page={{ compras.previous_page_number }}">previous</a>
+                                    {% endif %}
+                
+                                    <span class="current">
+                                        Page {{ compras.number }} of {{ compras.paginator.num_pages }}.
+                                    </span>
+                
+                                    {% if compras.has_next %}
+                                        <a href="?page={{ compras.next_page_number }}">next</a>
+                                        <a href="?page={{ compras.paginator.num_pages }}">last &raquo;</a>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <!-- End Pagination -->
+
+
+
+
                         </div>
                     </div>
 

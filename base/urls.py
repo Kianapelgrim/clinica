@@ -143,4 +143,7 @@ urlpatterns = [
 
     path('facturas/<int:pk>/', views.facturas, name='facturas'),
 
+    path('editartipocita/<int:pk>/', views.editartipocita, name='editartipocita'),
+
+
 ]   

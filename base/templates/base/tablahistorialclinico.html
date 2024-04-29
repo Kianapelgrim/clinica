@@ -26,6 +26,18 @@
                         </div>
                     </div>
                     
+
+                    <div class="container mt-3">
+                        <form action="" method="GET">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Buscar..." name="q">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="submit">Buscar</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
                     
 
                     <!-- DataTales Example -->
@@ -63,6 +75,33 @@
                                     </tbody>
                                 </table>
                             </div>
+
+                            <div class="pagination justify-content-center">
+                                <ul class="pagination">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1">&laquo;</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                    </li>
+                                    {% endif %}
+                
+                                    <li class="page-item">
+                                        <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                                    </li>
+                
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">&raquo;</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            
                         </div>
                     </div>
 

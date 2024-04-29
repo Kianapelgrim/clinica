@@ -31,10 +31,7 @@
                         <input type="text" id="txtTelefono" name="txtTelefono" value="{{surcursales.telefono}}" class="form-control" placeholder="Telefono" minlength="8" maxlength="8" required>
                         <small id="telefonoError" class="text-danger"></small>
                     </div>
-                    <div class="form-group">
-                        <input type="text" id="txtPersonaEncargada" name="txtPersonaEncargada" value="{{surcursales.personaEncargada}}" class="form-control" placeholder="PersonaEncargada" minlength="2" required>
-                        <small id="personaEncargadaError" class="text-danger"></small>
-                    </div>
+                    
                     <div class="form-group">
                         <button type="submit" class="btn btn-success btn-block text-white">Guardar</button>
                     </div>
@@ -86,16 +83,6 @@
                                 direccionError.textContent = '';
                             }
                         
-                            // Validación para personaEncargada
-                            var personaEncargadaInput = document.getElementById('txtPersonaEncargada');
-                            var personaEncargadaError = document.getElementById('personaEncargada');
-                            var personaEncargadaValue = personaEncargadaInput.value.trim();
-                            if (personaEncargadaValue.trim().length < 2 || !/^[a-zA-Z]+$/.test(personaEncargadaValue.trim())) {
-                                personaEncargadaError.textContent = 'La persona encargada debe tener al menos 2 caracteres y contener solo letras.';
-                                isValid = false;
-                            } else {
-                                personaEncargadaError.textContent = '';
-                            }
                         
                             // Validación para teléfono (existente en tu código)
                             var telefonoInput = document.getElementById('txtTelefono');

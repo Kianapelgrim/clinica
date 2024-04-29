@@ -5,6 +5,7 @@ from django import forms
 from django.forms import DateTimeInput, EmailInput, ModelForm, DateInput, TextInput
 from django.forms.models import inlineformset_factory, modelformset_factory
 from .models import *
+import pytz
 
 class ECMedicamentosForm(ModelForm):
     class Meta:
@@ -169,6 +170,20 @@ class EditCompraMedicamentoForm(forms.ModelForm):
             }),
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        estado_compra = cleaned_data.get('estadoCompra')
+        fecha_recibido = cleaned_data.get('fechaRecibido')
+        fecha_despacho = cleaned_data.get('fechaDespacho')
+
+        if estado_compra and estado_compra.id == 8:
+            if not fecha_recibido:
+                self.add_error('fechaRecibido', 'La fecha de recibido es obligatoria.')
+            if not fecha_despacho:
+                self.add_error('fechaDespacho', 'La fecha de despacho es obligatoria.')
+
+        return cleaned_data
+
     def clean_precioTotal(self):
             precio_total = self.cleaned_data.get('precioTotal')
             if precio_total is not None and precio_total <= 0:
@@ -321,6 +336,19 @@ class DocumentoForm(forms.ModelForm):
                 'placeholder': 'Informacion'
             }),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tipodocumento = cleaned_data.get('tipodocumento')
+        informacion = cleaned_data.get('informacion')
+
+        if tipodocumento == 1: 
+            if not (informacion.isdigit() and len(informacion) == 13):
+                raise ValidationError({
+                    'informacion': "Para el tipo de documento Identidad, la información debe tener exactamente 13 dígitos."
+                })
+
+        return cleaned_data
 
 
 class EmpleadosForm(forms.ModelForm):
@@ -602,9 +630,11 @@ class CitasForm(ModelForm):
 
     def clean_fecha(self):
         fecha = self.cleaned_data.get('fecha')
-        now = datetime.datetime.now(datetime.timezone.utc)
-        if fecha <= now:
-            raise ValidationError("La fecha de la cita debe estar en el futuro.")
+        tz = pytz.timezone('America/Costa_Rica')
+        now = timezone.now().astimezone(tz)
+        if fecha.date() == now.date() and fecha.hour <= now.hour:
+
+            raise ValidationError(f"La cita para hoy debe ser al menos una hora después de la hora actual ({now.hour}:00).")
         if fecha.minute != 0 or fecha.second != 0:
             raise ValidationError("La cita debe ser programada a la hora en punto.")
         if not (7 <= fecha.hour < 17):
